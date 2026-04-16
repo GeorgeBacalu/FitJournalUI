@@ -95,7 +95,7 @@
             <div>
               <div class="font-semibold text-xl">{{ selectedWorkout.name }}</div>
               <small class="text-color-secondary">
-                {{ selectedWorkout.startedAt | date: 'full' }}
+                {{ selectedWorkout.startedAt | date: 'fullDate' }}
               </small>
             </div>
             <p-tag [value]="selectedWorkout.durationMinutes + ' min'" severity="secondary" />
@@ -149,15 +149,26 @@
                 <td>{{ entry.reps }}</td>
                 <td>{{ entry.weightUsed }} kg</td>
                 <td>
-                  <button
-                    pButton
-                    type="button"
-                    icon="pi pi-trash"
-                    label="Remove"
-                    severity="danger"
-                    size="small"
-                    (click)="removeWorkoutExercise(entry)"
-                  ></button>
+                  <div class="table-actions">
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-pencil"
+                      label="Edit"
+                      severity="secondary"
+                      size="small"
+                      (click)="startEditWorkoutExercise(entry)"
+                    ></button>
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-trash"
+                      label="Remove"
+                      severity="danger"
+                      size="small"
+                      (click)="removeWorkoutExercise(entry)"
+                    ></button>
+                  </div>
                 </td>
               </tr>
             </ng-template>
@@ -441,7 +452,8 @@
   [(visible)]="exerciseDialogVisible"
   [modal]="true"
   [style]="{ width: '32rem', maxWidth: '95vw' }"
-  header="Add exercise"
+  [header]="editingWorkoutExerciseId ? 'Edit exercise' : 'Add exercise'"
+  (onHide)="handleWorkoutExerciseDialogHide()"
 >
   <form [formGroup]="workoutExerciseForm" (ngSubmit)="saveWorkoutExercise()" class="form-grid">
     <div class="field">
@@ -513,7 +525,7 @@
       <button
         pButton
         type="submit"
-        label="Add exercise"
+        [label]="editingWorkoutExerciseId ? 'Save changes' : 'Add exercise'"
         icon="pi pi-check"
         [loading]="savingExercise"
       ></button>

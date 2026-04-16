@@ -68,6 +68,7 @@ export class WorkoutsPageComponent implements OnInit {
   savingWorkout = false;
   exerciseDialogVisible = false;
   exerciseSubmitted = false;
+  editingWorkoutExerciseId: string | null = null;
   loading = false;
   submitted = false;
   workoutDialogVisible = false;
@@ -154,8 +155,10 @@ export class WorkoutsPageComponent implements OnInit {
       return;
     }
 
+    this.editingWorkoutExerciseId = null;
     this.exerciseSubmitted = false;
     this.exerciseDialogVisible = true;
+    this.workoutExerciseForm.controls.exerciseId.enable();
     this.workoutExerciseForm.reset({
       exerciseId: null,
       sets: 3,
@@ -333,25 +336,37 @@ export class WorkoutsPageComponent implements OnInit {
       return;
     }
 
+    const editingWorkoutExerciseId = this.editingWorkoutExerciseId;
     this.savingExercise = true;
 
-    this.workoutExerciseService
-      .create({
-        workoutId: this.selectedWorkoutId,
-        exerciseId: formValue.exerciseId,
-        sets: formValue.sets,
-        reps: formValue.reps,
-        weightUsed: formValue.weightUsed
-      })
+    const request = {
+      workoutId: this.selectedWorkoutId,
+      exerciseId: formValue.exerciseId,
+      sets: formValue.sets,
+      reps: formValue.reps,
+      weightUsed: formValue.weightUsed
+    };
+
+    const saveRequest$ = editingWorkoutExerciseId
+      ? this.workoutExerciseService.update({
+          id: editingWorkoutExerciseId,
+          ...request
+        })
+      : this.workoutExerciseService.create(request);
+
+    saveRequest$
       .pipe(finalize(() => (this.savingExercise = false)))
       .subscribe({
         next: (response) => {
-          this.notificationService.success('Exercise added', response.message);
+          this.notificationService.success(
+            editingWorkoutExerciseId ? 'Exercise updated' : 'Exercise added',
+            response.message
+          );
           this.exerciseDialogVisible = false;
           this.selectWorkout(this.selectedWorkoutId as string);
         },
         error: (error) =>
-          this.notificationService.fromHttpError(error, 'Exercise add failed')
+          this.notificationService.fromHttpError(error, 'Exercise save failed')
       });
   }
 
@@ -448,6 +463,24 @@ export class WorkoutsPageComponent implements OnInit {
         error: (error) =>
           this.notificationService.fromHttpError(error, 'Workout details failed to load')
       });
+  }
+
+  startEditWorkoutExercise(entry: ShortWorkoutExercise) {
+    this.editingWorkoutExerciseId = entry.id;
+    this.exerciseSubmitted = false;
+    this.exerciseDialogVisible = true;
+    this.workoutExerciseForm.reset({
+      exerciseId: entry.exerciseId,
+      sets: entry.sets,
+      reps: entry.reps,
+      weightUsed: entry.weightUsed
+    });
+    this.workoutExerciseForm.controls.exerciseId.disable();
+  }
+
+  handleWorkoutExerciseDialogHide() {
+    this.editingWorkoutExerciseId = null;
+    this.workoutExerciseForm.controls.exerciseId.enable();
   }
 
   startEditCatalogExercise(exerciseId: string) {

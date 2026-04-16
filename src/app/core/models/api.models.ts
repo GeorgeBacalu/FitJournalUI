@@ -117,6 +117,7 @@ export interface FoodItemsResponse {
 }
 
 export interface WorkoutExerciseEntry {
+  id: string;
   exerciseId: string;
   sets: number;
   reps: number;
@@ -159,6 +160,7 @@ export interface RemoveRangeRequest {
 }
 
 export interface ShortWorkoutExercise {
+  id: string;
   exerciseId: string;
   sets: number;
   reps: number;
