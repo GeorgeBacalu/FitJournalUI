@@ -1,0 +1,261 @@
+<div class="flex align-items-start justify-content-between gap-3 mb-4 flex-wrap">
+  <div>
+    <h2 class="page-title">Nutrition</h2>
+    <p class="page-subtitle">Log what you eat and review the catalog available from the API.</p>
+  </div>
+
+  <div class="toolbar-actions">
+    <button
+      pButton
+      type="button"
+      label="Refresh"
+      icon="pi pi-refresh"
+      severity="secondary"
+      [loading]="loading"
+      (click)="refresh()"
+    ></button>
+    <button
+      pButton
+      type="button"
+      label="New food log"
+      icon="pi pi-plus"
+      (click)="openNewFoodLogDialog()"
+    ></button>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="col-12 md:col-4">
+    <p-card>
+      <p class="summary-value">{{ foodLogs.length }}</p>
+      <p class="summary-caption">Nutrition logs</p>
+    </p-card>
+  </div>
+  <div class="col-12 md:col-4">
+    <p-card>
+      <p class="summary-value">{{ foodItems.length }}</p>
+      <p class="summary-caption">Food catalog items</p>
+    </p-card>
+  </div>
+  <div class="col-12 md:col-4">
+    <p-card>
+      <p class="summary-value">{{ foodLogs[0]?.servings ?? '-' }}</p>
+      <p class="summary-caption">Latest servings count</p>
+    </p-card>
+  </div>
+</div>
+
+<div class="grid mt-1">
+  <div class="col-12 xl:col-7">
+    <p-card header="Food logs">
+      <p-table [value]="foodLogs" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Date</th>
+            <th>Food item</th>
+            <th>Servings</th>
+            <th>Quantity</th>
+            <th>Actions</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-foodLog>
+          <tr>
+            <td>{{ foodLog.date | date: 'medium' }}</td>
+            <td>{{ foodLogName(foodLog.id) }}</td>
+            <td>{{ foodLog.servings }}</td>
+            <td>{{ foodLog.quantity }} g</td>
+            <td>
+              <div class="table-actions">
+                <button
+                  pButton
+                  type="button"
+                  label="Edit"
+                  icon="pi pi-pencil"
+                  severity="secondary"
+                  size="small"
+                  (click)="startEditFoodLog(foodLog.id)"
+                ></button>
+                <button
+                  pButton
+                  type="button"
+                  label="Delete"
+                  icon="pi pi-trash"
+                  severity="danger"
+                  size="small"
+                  (click)="removeFoodLog(foodLog)"
+                ></button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="5">
+              <p class="section-empty">No food logs recorded yet.</p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  </div>
+
+  <div class="col-12 xl:col-5">
+    <p-card header="Food catalog">
+      <p-table [value]="foodItems" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Brand</th>
+            <th>Actions</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-foodItem>
+          <tr>
+            <td>{{ foodItem.name }}</td>
+            <td>{{ categoryLabel(foodItem.category) }}</td>
+            <td>{{ brandLabel(foodItem.brand) }}</td>
+            <td>
+              <button
+                pButton
+                type="button"
+                label="View"
+                icon="pi pi-eye"
+                severity="secondary"
+                size="small"
+                (click)="openFoodDetails(foodItem.id)"
+              ></button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="4">
+              <p class="section-empty">Food catalog is empty.</p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  </div>
+</div>
+
+<p-dialog
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [style]="{ width: '36rem', maxWidth: '95vw' }"
+  [header]="editingFoodLogId ? 'Edit food log' : 'New food log'"
+>
+  <form [formGroup]="form" (ngSubmit)="saveFoodLog()" class="form-grid">
+    <div class="field">
+      <label class="field-label" for="foodLogDate">Date and time</label>
+      <p-datepicker
+        inputId="foodLogDate"
+        formControlName="date"
+        [showIcon]="true"
+        [showTime]="true"
+        hourFormat="24"
+        appendTo="body"
+        styleClass="w-full"
+      />
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="foodId">Food item</label>
+      <p-select
+        inputId="foodId"
+        formControlName="foodId"
+        [options]="foodItems"
+        optionLabel="name"
+        optionValue="id"
+        placeholder="Select a food item"
+        class="w-full"
+      />
+    </div>
+
+    <div class="grid">
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label class="field-label" for="servings">Servings</label>
+          <p-inputnumber
+            inputId="servings"
+            formControlName="servings"
+            [min]="1"
+            [max]="100"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="0"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label class="field-label" for="quantity">Quantity (g)</label>
+          <p-inputnumber
+            inputId="quantity"
+            formControlName="quantity"
+            [min]="100"
+            [max]="5000"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="0"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="toolbar-actions justify-content-end mt-2">
+      <button
+        pButton
+        type="button"
+        label="Cancel"
+        severity="secondary"
+        (click)="dialogVisible = false"
+      ></button>
+      <button
+        pButton
+        type="submit"
+        [label]="editingFoodLogId ? 'Save changes' : 'Save food log'"
+        icon="pi pi-check"
+        [loading]="saving"
+      ></button>
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog
+  [(visible)]="foodItemDialogVisible"
+  [modal]="true"
+  [style]="{ width: '28rem', maxWidth: '95vw' }"
+  header="Food item details"
+>
+  @if (foodItemDetails) {
+    <div class="flex flex-column gap-3">
+      <div>
+        <div class="font-semibold text-xl">{{ foodItemDetails.name }}</div>
+        <small class="text-color-secondary">
+          {{ categoryLabel(foodItemDetails.category) }} • {{ brandLabel(foodItemDetails.brand) }}
+        </small>
+      </div>
+
+      <div class="grid">
+        <div class="col-6">
+          <p class="summary-value text-3xl">{{ foodItemDetails.calories }}</p>
+          <p class="summary-caption">Calories</p>
+        </div>
+        <div class="col-6">
+          <p class="summary-value text-3xl">{{ foodItemDetails.protein }}</p>
+          <p class="summary-caption">Protein</p>
+        </div>
+        <div class="col-6">
+          <p class="summary-value text-3xl">{{ foodItemDetails.carbs }}</p>
+          <p class="summary-caption">Carbs</p>
+        </div>
+        <div class="col-6">
+          <p class="summary-value text-3xl">{{ foodItemDetails.fat }}</p>
+          <p class="summary-caption">Fat</p>
+        </div>
+      </div>
+    </div>
+  }
+</p-dialog>
