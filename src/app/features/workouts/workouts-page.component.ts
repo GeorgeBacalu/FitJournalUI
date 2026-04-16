@@ -66,6 +66,7 @@ export class WorkoutsPageComponent implements OnInit {
   standaloneExerciseSubmitted = false;
   savingExercise = false;
   savingWorkout = false;
+  refreshing = false;
   exerciseDialogVisible = false;
   exerciseSubmitted = false;
   editingWorkoutExercise: ShortWorkoutExercise | null = null;
@@ -132,6 +133,7 @@ export class WorkoutsPageComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.hydrateFromCache();
     this.refresh();
   }
 
@@ -226,51 +228,54 @@ export class WorkoutsPageComponent implements OnInit {
     preferredWorkoutId = this.selectedWorkoutId,
     preferredExerciseId = this.selectedCatalogExerciseId
   ) {
-    this.loading = true;
+    this.hydrateFromCache();
+    this.refreshing = true;
 
     forkJoin({
       workouts: this.workoutService.load(),
       exercises: this.exerciseService.load()
-    }).subscribe({
-      next: (result) => {
-        this.workouts = this.sortByDateDesc(result.workouts, (item) => item.startedAt);
-        this.exerciseCatalog = [...result.exercises].sort((left, right) =>
-          left.name.localeCompare(right.name)
-        );
+    })
+      .pipe(finalize(() => (this.refreshing = false)))
+      .subscribe({
+        next: (result) => {
+          this.workouts = this.sortByDateDesc(result.workouts, (item) => item.startedAt);
+          this.exerciseCatalog = [...result.exercises].sort((left, right) =>
+            left.name.localeCompare(right.name)
+          );
 
-        const nextExerciseId =
-          preferredExerciseId &&
-          this.exerciseCatalog.some((item) => item.id === preferredExerciseId)
-            ? preferredExerciseId
-            : null;
+          const nextExerciseId =
+            preferredExerciseId &&
+            this.exerciseCatalog.some((item) => item.id === preferredExerciseId)
+              ? preferredExerciseId
+              : null;
 
-        if (nextExerciseId) {
-          this.openCatalogExercise(nextExerciseId, false);
-        } else {
-          this.selectedCatalogExerciseId = null;
-          this.exerciseService.clearSelected();
+          if (nextExerciseId) {
+            this.openCatalogExercise(nextExerciseId, false);
+          } else if (this.exerciseCatalog.length || preferredExerciseId) {
+            this.selectedCatalogExerciseId = null;
+            this.exerciseService.clearSelected();
+          }
+
+          if (!this.workouts.length) {
+            this.selectedWorkout = null;
+            this.selectedWorkoutId = null;
+            this.workoutExercises = [];
+            this.workoutService.rememberSelectedWorkout(null);
+            this.workoutExerciseService.clear();
+            return;
+          }
+
+          const nextWorkoutId =
+            preferredWorkoutId && this.workouts.some((item) => item.id === preferredWorkoutId)
+              ? preferredWorkoutId
+              : this.workouts[0].id;
+
+          this.selectWorkout(nextWorkoutId);
+        },
+        error: (error) => {
+          this.notificationService.fromHttpError(error, 'Workouts load failed');
         }
-
-        if (!this.workouts.length) {
-          this.loading = false;
-          this.selectedWorkout = null;
-          this.selectedWorkoutId = null;
-          this.workoutExercises = [];
-          return;
-        }
-
-        const nextWorkoutId =
-          preferredWorkoutId && this.workouts.some((item) => item.id === preferredWorkoutId)
-            ? preferredWorkoutId
-            : this.workouts[0].id;
-
-        this.selectWorkout(nextWorkoutId);
-      },
-      error: (error) => {
-        this.loading = false;
-        this.notificationService.fromHttpError(error, 'Workouts load failed');
-      }
-    });
+      });
   }
 
   saveWorkout() {
@@ -444,6 +449,7 @@ export class WorkoutsPageComponent implements OnInit {
 
   selectWorkout(workoutId: string) {
     this.loading = true;
+    this.workoutService.rememberSelectedWorkout(workoutId);
 
     forkJoin({
       detail: this.workoutService.getById(workoutId),
@@ -634,5 +640,31 @@ export class WorkoutsPageComponent implements OnInit {
         (workoutExercise) => workoutExercise.exerciseId === entry.exerciseId
       )?.id ?? null
     );
+  }
+
+  private hydrateFromCache() {
+    this.workouts = this.sortByDateDesc(
+      this.workoutService.getItemsSnapshot(),
+      (item) => item.startedAt
+    );
+    this.exerciseCatalog = [...this.exerciseService.getItemsSnapshot()].sort((left, right) =>
+      left.name.localeCompare(right.name)
+    );
+
+    const cachedSelectedWorkoutId =
+      this.workoutService.getSelectedWorkoutId() ?? this.workouts[0]?.id ?? null;
+    const hasMatchingSelectedWorkout =
+      !!cachedSelectedWorkoutId &&
+      this.workouts.some((workout) => workout.id === cachedSelectedWorkoutId);
+
+    this.selectedWorkoutId = hasMatchingSelectedWorkout
+      ? cachedSelectedWorkoutId
+      : this.workouts[0]?.id ?? null;
+    this.selectedWorkout = this.workoutService.getCachedWorkout(this.selectedWorkoutId);
+    this.workoutExercises =
+      this.selectedWorkoutId === this.workoutService.getSelectedWorkoutId()
+        ? this.workoutExerciseService.getItemsSnapshot()
+        : [];
+    this.selectedCatalogExerciseId = this.exerciseService.getSelectedExerciseId();
   }
 }
