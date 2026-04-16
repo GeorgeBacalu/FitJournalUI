@@ -31,27 +31,7 @@ export class NotificationService {
 
   getErrorMessage(error: unknown) {
     if (error instanceof HttpErrorResponse) {
-      const payload = error.error as ApiErrorResponse | string | null;
-
-      if (typeof payload === 'string' && payload.trim()) {
-        return payload;
-      }
-
-      if (payload && typeof payload !== 'string' && payload.detail) {
-        return payload.detail;
-      }
-
-      if (payload && typeof payload !== 'string' && payload.title) {
-        return payload.title;
-      }
-
-      if (payload && typeof payload !== 'string' && payload.message) {
-        return payload.message;
-      }
-
-      if (error.message) {
-        return error.message;
-      }
+      return this.getHttpErrorMessage(error);
     }
 
     if (error instanceof Error) {
@@ -59,5 +39,112 @@ export class NotificationService {
     }
 
     return 'Something went wrong while contacting the FitJournal API.';
+  }
+
+  private getHttpErrorMessage(error: HttpErrorResponse) {
+    if (typeof error.error === 'string' && error.error.trim()) {
+      return this.normalizeServerMessage(error.error, error.status) ?? error.error.trim();
+    }
+
+    const payload = this.asApiErrorResponse(error.error);
+    const validationMessage = this.getValidationMessage(payload);
+
+    if (validationMessage) {
+      return validationMessage;
+    }
+
+    const rawMessage = this.getRawPayloadMessage(payload);
+    const normalizedMessage = this.normalizeServerMessage(rawMessage, error.status);
+
+    if (normalizedMessage) {
+      return normalizedMessage;
+    }
+
+    if (error.status === 0) {
+      return 'Server is unreachable. Please check your internet connection and try again.';
+    }
+
+    if (error.status >= 500) {
+      return 'Something unexpected happened on the server. Please try again in a moment.';
+    }
+
+    if (error.status === 409) {
+      return 'This request conflicts with the current data. Review the submitted values and try again.';
+    }
+
+    return error.message || 'Something went wrong while contacting the server';
+  }
+
+  private asApiErrorResponse(payload: unknown) {
+    return payload && typeof payload === 'object' ? (payload as ApiErrorResponse) : null;
+  }
+
+  private getRawPayloadMessage(payload: ApiErrorResponse | null) {
+    if (!payload) {
+      return null;
+    }
+
+    return this.firstNonEmpty(payload.detail, payload.title, payload.message);
+  }
+
+  private getValidationMessage(payload: ApiErrorResponse | null) {
+    if (!payload?.errors) {
+      return null;
+    }
+
+    const messages = Object.values(payload.errors)
+      .flatMap((value) => (Array.isArray(value) ? value : [value]))
+      .map((value) => `${value ?? ''}`.trim())
+      .filter((value) => !!value);
+
+    return messages.length ? messages.join(' ') : null;
+  }
+
+  private normalizeServerMessage(message: string | null, status: number) {
+    if (!message) {
+      return null;
+    }
+
+    const normalizedMessage = message.trim();
+    const lowerMessage = normalizedMessage.toLowerCase();
+
+    if (
+      lowerMessage.includes('duplicate') ||
+      lowerMessage.includes('unique constraint') ||
+      lowerMessage.includes('unique index')
+    ) {
+      return 'This change would create a duplicate record. Adjust the conflicting value and try again.';
+    }
+
+    if (
+      lowerMessage.includes('reference constraint') ||
+      lowerMessage.includes('foreign key') ||
+      lowerMessage.includes('conflicted with the reference constraint')
+    ) {
+      return 'This change depends on related data that is missing or still in use. Update the related records first and try again.';
+    }
+
+    if (lowerMessage.includes('check constraint')) {
+      return 'One or more submitted values break the database rules. Review the form values and try again.';
+    }
+
+    if (status === 409 || lowerMessage.includes('constraint')) {
+      return 'This request conflicts with the current data. Review the submitted values and try again.';
+    }
+
+    if (
+      status >= 500 ||
+      lowerMessage.includes('internal server error') ||
+      lowerMessage.includes('exception') ||
+      lowerMessage.includes('stack trace')
+    ) {
+      return 'Something unexpected happened on the server. Please try again in a moment.';
+    }
+
+    return normalizedMessage;
+  }
+
+  private firstNonEmpty(...values: Array<string | null | undefined>) {
+    return values.find((value) => !!value?.trim())?.trim() ?? null;
   }
 }

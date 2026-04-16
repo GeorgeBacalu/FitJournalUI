@@ -3,6 +3,8 @@ export interface MessageResponse {
 }
 
 export interface ApiErrorResponse {
+  errors?: Record<string, string[] | string | null | undefined> | null;
+  status?: number | null;
   title?: string | null;
   detail?: string | null;
   message?: string | null;
