@@ -19,7 +19,9 @@ import { BaseResourceService } from './base-resource.service';
 })
 export class WorkoutService extends BaseResourceService {
   private readonly endpoint = `${API_BASE_URL}/workout`;
+  private readonly detailsSubject = new BehaviorSubject<Record<string, Workout>>({});
   private readonly itemsSubject = new BehaviorSubject<ShortWorkout[]>([]);
+  private readonly selectedWorkoutIdSubject = new BehaviorSubject<string | null>(null);
 
   readonly items$ = this.itemsSubject.asObservable();
 
@@ -27,17 +29,75 @@ export class WorkoutService extends BaseResourceService {
     super();
   }
 
+  getItemsSnapshot() {
+    return this.itemsSubject.value;
+  }
+
+  getCachedWorkout(id: string | null) {
+    return id ? this.detailsSubject.value[id] ?? null : null;
+  }
+
+  getSelectedWorkoutId() {
+    return this.selectedWorkoutIdSubject.value;
+  }
+
+  rememberSelectedWorkout(id: string | null) {
+    this.selectedWorkoutIdSubject.next(id);
+  }
+
   load() {
     return this.withLoading(
       this.httpClient.post<WorkoutsResponse>(`${this.endpoint}/all`, DEFAULT_PAGE_REQUEST).pipe(
-        tap((response) => this.itemsSubject.next(response.workouts)),
+        tap((response) => {
+          this.itemsSubject.next(response.workouts);
+
+          const selectedWorkoutId = this.selectedWorkoutIdSubject.value;
+
+          if (
+            selectedWorkoutId &&
+            !response.workouts.some((workout) => workout.id === selectedWorkoutId)
+          ) {
+            this.selectedWorkoutIdSubject.next(null);
+          }
+
+          const cachedDetails = this.detailsSubject.value;
+          const nextDetails = { ...cachedDetails };
+          let hasDetailsChanges = false;
+
+          for (const workout of response.workouts) {
+            const cachedWorkout = cachedDetails[workout.id];
+
+            if (!cachedWorkout) {
+              continue;
+            }
+
+            nextDetails[workout.id] = {
+              ...cachedWorkout,
+              name: workout.name,
+              durationMinutes: workout.durationMinutes,
+              startedAt: workout.startedAt
+            };
+            hasDetailsChanges = true;
+          }
+
+          if (hasDetailsChanges) {
+            this.detailsSubject.next(nextDetails);
+          }
+        }),
         map((response) => response.workouts)
       )
     );
   }
 
   getById(id: string) {
-    return this.httpClient.get<Workout>(`${this.endpoint}/${id}`);
+    return this.httpClient.get<Workout>(`${this.endpoint}/${id}`).pipe(
+      tap((workout) => {
+        this.detailsSubject.next({
+          ...this.detailsSubject.value,
+          [workout.id]: workout
+        });
+      })
+    );
   }
 
   create(request: AddWorkoutRequest) {

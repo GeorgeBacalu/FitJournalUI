@@ -19,6 +19,10 @@ export class FoodItemService extends BaseResourceService {
     super();
   }
 
+  getItemsSnapshot() {
+    return this.itemsSubject.value;
+  }
+
   load() {
     return this.withLoading(
       this.httpClient.post<FoodItemsResponse>(`${this.endpoint}/all`, DEFAULT_PAGE_REQUEST).pipe(

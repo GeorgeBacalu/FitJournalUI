@@ -29,6 +29,14 @@ export class FoodLogService extends BaseResourceService {
     super();
   }
 
+  getItemsSnapshot() {
+    return this.itemsSubject.value;
+  }
+
+  getDetailsSnapshot() {
+    return this.detailsSubject.value;
+  }
+
   load() {
     return this.withLoading(
       this.httpClient.post<FoodLogsResponse>(`${this.endpoint}/all`, DEFAULT_PAGE_REQUEST).pipe(

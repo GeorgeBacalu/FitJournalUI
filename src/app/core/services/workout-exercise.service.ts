@@ -26,6 +26,10 @@ export class WorkoutExerciseService extends BaseResourceService {
     super();
   }
 
+  getItemsSnapshot() {
+    return this.itemsSubject.value;
+  }
+
   load(workoutId: string | null): Observable<ShortWorkoutExercise[]> {
     if (!workoutId) {
       this.itemsSubject.next([]);

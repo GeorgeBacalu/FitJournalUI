@@ -31,6 +31,18 @@ export class ExerciseService extends BaseResourceService {
     super();
   }
 
+  getItemsSnapshot() {
+    return this.itemsSubject.value;
+  }
+
+  getSelectedExerciseSnapshot() {
+    return this.selectedExerciseSubject.value;
+  }
+
+  getSelectedExerciseId() {
+    return this.selectedExerciseSubject.value?.id ?? null;
+  }
+
   load() {
     return this.withLoading(
       this.httpClient.post<ExercisesResponse>(`${this.endpoint}/all`, DEFAULT_PAGE_REQUEST).pipe(

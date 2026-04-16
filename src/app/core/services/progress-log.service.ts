@@ -27,6 +27,10 @@ export class ProgressLogService extends BaseResourceService {
     super();
   }
 
+  getItemsSnapshot() {
+    return this.itemsSubject.value;
+  }
+
   load() {
     return this.withLoading(
       this.httpClient.post<ProgressLogsResponse>(`${this.endpoint}/all`, DEFAULT_PAGE_REQUEST).pipe(

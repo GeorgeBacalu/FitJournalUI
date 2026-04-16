@@ -10,13 +10,11 @@ const toLabelMap = (options: OptionItem[]) =>
   }, {});
 
 export const GENDER_OPTIONS: OptionItem[] = [
-  { label: 'Unknown', value: 0 },
   { label: 'Male', value: 1 },
   { label: 'Female', value: 2 }
 ];
 
 export const GOAL_TYPE_OPTIONS: OptionItem[] = [
-  { label: 'Unknown', value: 0 },
   { label: 'Endurance gain', value: 1 },
   { label: 'Muscle gain', value: 2 },
   { label: 'Strength gain', value: 3 },
@@ -26,7 +24,6 @@ export const GOAL_TYPE_OPTIONS: OptionItem[] = [
 ];
 
 export const MUSCLE_GROUP_OPTIONS: OptionItem[] = [
-  { label: 'Unknown', value: 0 },
   { label: 'Abdomen', value: 1 },
   { label: 'Arms', value: 2 },
   { label: 'Back', value: 3 },
@@ -36,14 +33,12 @@ export const MUSCLE_GROUP_OPTIONS: OptionItem[] = [
 ];
 
 export const DIFFICULTY_OPTIONS: OptionItem[] = [
-  { label: 'Unknown', value: 0 },
   { label: 'Beginner', value: 1 },
   { label: 'Intermediate', value: 2 },
   { label: 'Advanced', value: 3 }
 ];
 
 export const FOOD_CATEGORY_OPTIONS: OptionItem[] = [
-  { label: 'Unknown', value: 0 },
   { label: 'Protein', value: 1 },
   { label: 'Carbohydrate', value: 2 },
   { label: 'Fat', value: 3 },
@@ -57,7 +52,6 @@ export const FOOD_CATEGORY_OPTIONS: OptionItem[] = [
 ];
 
 export const FOOD_BRAND_OPTIONS: OptionItem[] = [
-  { label: 'Unknown', value: 0 },
   { label: 'Generic', value: 1 },
   { label: 'Homemade', value: 2 },
   { label: 'MyProtein', value: 3 },

@@ -23,6 +23,10 @@ export class UserService extends BaseResourceService {
     super();
   }
 
+  getCurrentUserSnapshot() {
+    return this.currentUserSubject.value;
+  }
+
   loadCurrentUser(): Observable<User | null> {
     const userId = this.sessionService.getCurrentUserId();
 

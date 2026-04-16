@@ -27,6 +27,10 @@ export class GoalService extends BaseResourceService {
     super();
   }
 
+  getItemsSnapshot() {
+    return this.itemsSubject.value;
+  }
+
   load() {
     return this.withLoading(
       this.httpClient.post<GoalsResponse>(`${this.endpoint}/all`, DEFAULT_PAGE_REQUEST).pipe(
