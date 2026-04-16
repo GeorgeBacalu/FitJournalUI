@@ -17,6 +17,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { UserService } from '../../core/services/user.service';
 import { toDateOnlyString, toDateValue } from '../../core/utils/date.utils';
+import { Router } from '@angular/router';
 
 @Component({
   imports: [
@@ -37,6 +38,7 @@ export class ProfilePageComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   loading = false;
   profileSubmitted = false;
+  refreshing = false;
   savingPassword = false;
   savingProfile = false;
   user: User | null = null;
@@ -81,21 +83,30 @@ export class ProfilePageComponent implements OnInit {
 
   constructor(
     private readonly authService: AuthService,
+    private readonly router: Router,
     private readonly confirmationService: ConfirmationService,
     private readonly notificationService: NotificationService,
     private readonly userService: UserService
   ) {}
 
   ngOnInit() {
+    this.hydrateFromCache();
     this.loadProfile();
   }
 
   loadProfile() {
-    this.loading = true;
+    this.hydrateFromCache();
+    this.refreshing = true;
+    this.loading = !this.user;
 
     this.userService
       .loadCurrentUser()
-      .pipe(finalize(() => (this.loading = false)))
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this.refreshing = false;
+        })
+      )
       .subscribe({
         next: (user) => {
           if (!user) {
@@ -207,12 +218,33 @@ export class ProfilePageComponent implements OnInit {
         'This will deactivate your FitJournal account. You will be signed out immediately.',
       accept: () => {
         this.authService.deactivateAccount().subscribe({
-          next: (response) =>
-            this.notificationService.success('Account deactivated', response.message),
+          next: (response) => {
+            this.notificationService.success('Account deactivated', response.message)
+            this.router.navigate(['/login']);
+          },
           error: (error) =>
             this.notificationService.fromHttpError(error, 'Account deactivation failed')
         });
       }
+    });
+  }
+
+  private hydrateFromCache() {
+    const user = this.userService.getCurrentUserSnapshot();
+
+    if (!user) {
+      return;
+    }
+
+    this.user = user;
+    this.profileForm.reset({
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      birthday: toDateValue(user.birthday),
+      height: user.height,
+      weight: user.weight,
+      gender: user.gender
     });
   }
 }
