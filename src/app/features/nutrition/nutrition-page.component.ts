@@ -39,6 +39,7 @@ export class NutritionPageComponent implements OnInit {
   foodItems: ShortFoodItem[] = [];
   foodLogs: ShortFoodLog[] = [];
   loading = false;
+  refreshing = false;
   saving = false;
   submitted = false;
   dialogVisible = false;
@@ -66,6 +67,7 @@ export class NutritionPageComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.hydrateFromCache();
     this.refresh();
   }
 
@@ -110,13 +112,14 @@ export class NutritionPageComponent implements OnInit {
   }
 
   refresh() {
-    this.loading = true;
+    this.hydrateFromCache();
+    this.refreshing = true;
 
     forkJoin({
       foodLogs: this.foodLogService.load(),
       foodItems: this.foodItemService.load()
     })
-      .pipe(finalize(() => (this.loading = false)))
+      .pipe(finalize(() => (this.refreshing = false)))
       .subscribe({
         next: (result) => {
           this.foodLogs = [...result.foodLogs].sort(
@@ -220,5 +223,14 @@ export class NutritionPageComponent implements OnInit {
         error: (error) =>
           this.notificationService.fromHttpError(error, 'Food log details failed to load')
       });
+  }
+
+  private hydrateFromCache() {
+    this.foodLogs = [...this.foodLogService.getItemsSnapshot()].sort(
+      (left, right) => new Date(right.date).getTime() - new Date(left.date).getTime()
+    );
+    this.foodItems = [...this.foodItemService.getItemsSnapshot()].sort((left, right) =>
+      left.name.localeCompare(right.name)
+    );
   }
 }
