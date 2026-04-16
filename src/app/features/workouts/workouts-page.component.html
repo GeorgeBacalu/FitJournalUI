@@ -184,14 +184,16 @@
           Create standalone exercises and reuse them in any workout.
         </small>
       </div>
-      <button
-        pButton
-        type="button"
-        label="New exercise"
-        icon="pi pi-plus"
-        severity="secondary"
-        (click)="openStandaloneExerciseDialog()"
-      ></button>
+      @if (canManageExercises) {
+        <button
+          pButton
+          type="button"
+          label="New exercise"
+          icon="pi pi-plus"
+          severity="secondary"
+          (click)="openStandaloneExerciseDialog()"
+        ></button>
+      }
     </div>
 
     <p-card header="Exercise catalog">
