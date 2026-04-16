@@ -1,0 +1,210 @@
+<div class="flex align-items-start justify-content-between gap-3 mb-4 flex-wrap">
+  <div>
+    <h2 class="page-title">Progress</h2>
+    <p class="page-subtitle">Keep a simple history of your body metrics over time.</p>
+  </div>
+
+  <div class="toolbar-actions">
+    <button
+      pButton
+      type="button"
+      label="Refresh"
+      icon="pi pi-refresh"
+      severity="secondary"
+      [loading]="loading"
+      (click)="refresh()"
+    ></button>
+    <button
+      pButton
+      type="button"
+      label="New entry"
+      icon="pi pi-plus"
+      (click)="openNewLogDialog()"
+    ></button>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="col-12 md:col-4">
+    <p-card>
+      <p class="summary-value">{{ latestLog?.weight ?? '-' }}</p>
+      <p class="summary-caption">Latest weight (kg)</p>
+    </p-card>
+  </div>
+  <div class="col-12 md:col-4">
+    <p-card>
+      <p class="summary-value">{{ latestLog?.bodyFat ?? '-' }}</p>
+      <p class="summary-caption">Latest body fat (%)</p>
+    </p-card>
+  </div>
+  <div class="col-12 md:col-4">
+    <p-card>
+      <p class="summary-value">
+        {{ weightChange == null ? '-' : (weightChange > 0 ? '+' : '') + weightChange }}
+      </p>
+      <p class="summary-caption">Weight change (kg)</p>
+    </p-card>
+  </div>
+</div>
+
+<p-card header="Progress history" class="mt-4">
+  <p-table [value]="logs" responsiveLayout="scroll">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Date</th>
+        <th>Weight</th>
+        <th>Body fat</th>
+        <th>Actions</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-log>
+      <tr>
+        <td>{{ (log.date + 'T00:00:00') | date: 'mediumDate' }}</td>
+        <td>{{ log.weight }} kg</td>
+        <td>{{ log.bodyFat }}%</td>
+        <td>
+          <div class="table-actions">
+            <button
+              pButton
+              type="button"
+              label="Edit"
+              icon="pi pi-pencil"
+              severity="secondary"
+              size="small"
+              (click)="startEditLog(log.id)"
+            ></button>
+            <button
+              pButton
+              type="button"
+              label="Delete"
+              icon="pi pi-trash"
+              severity="danger"
+              size="small"
+              (click)="removeLog(log)"
+            ></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="4">
+          <p class="section-empty">No progress entries recorded yet.</p>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</p-card>
+
+<p-dialog
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [style]="{ width: '38rem', maxWidth: '95vw' }"
+  [header]="editingLogId ? 'Edit progress entry' : 'New progress entry'"
+>
+  <form [formGroup]="form" (ngSubmit)="saveLog()" class="form-grid">
+    <div class="field">
+      <label class="field-label" for="progressDate">Date</label>
+      <p-datepicker
+        inputId="progressDate"
+        formControlName="date"
+        [showIcon]="true"
+        appendTo="body"
+        styleClass="w-full"
+      />
+    </div>
+
+    <div class="grid">
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label class="field-label" for="progressWeight">Weight (kg)</label>
+          <p-inputnumber
+            inputId="progressWeight"
+            formControlName="weight"
+            [min]="25"
+            [max]="250"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="1"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label class="field-label" for="progressBodyFat">Body fat (%)</label>
+          <p-inputnumber
+            inputId="progressBodyFat"
+            formControlName="bodyFat"
+            [min]="2"
+            [max]="60"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="1"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="col-12 md:col-4">
+        <div class="field">
+          <label class="field-label" for="waistCm">Waist (cm)</label>
+          <p-inputnumber
+            inputId="waistCm"
+            formControlName="waistCm"
+            [min]="30"
+            [max]="250"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="1"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+      <div class="col-12 md:col-4">
+        <div class="field">
+          <label class="field-label" for="chestCm">Chest (cm)</label>
+          <p-inputnumber
+            inputId="chestCm"
+            formControlName="chestCm"
+            [min]="30"
+            [max]="200"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="1"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+      <div class="col-12 md:col-4">
+        <div class="field">
+          <label class="field-label" for="armsCm">Arms (cm)</label>
+          <p-inputnumber
+            inputId="armsCm"
+            formControlName="armsCm"
+            [min]="10"
+            [max]="100"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="1"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="toolbar-actions justify-content-end mt-2">
+      <button
+        pButton
+        type="button"
+        label="Cancel"
+        severity="secondary"
+        (click)="dialogVisible = false"
+      ></button>
+      <button
+        pButton
+        type="submit"
+        [label]="editingLogId ? 'Save changes' : 'Save entry'"
+        icon="pi pi-check"
+        [loading]="saving"
+      ></button>
+    </div>
+  </form>
+</p-dialog>
