@@ -1,0 +1,61 @@
+<div class="app-shell pt-4 pb-3">
+  <p-card>
+    <div class="flex flex-column gap-4">
+      <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between gap-3">
+        <div class="flex align-items-center gap-3">
+          <img alt="FitJournal logo" class="logo-mark" src="/fit-journal-logo.ico" />
+          <div>
+            <h1 class="page-title text-2xl">FitJournal</h1>
+            <p class="page-subtitle mt-2">
+              A lightweight frontend for your workouts, goals, progress and nutrition.
+            </p>
+          </div>
+        </div>
+
+        @if (user$ | async; as user) {
+          <div class="flex flex-wrap align-items-center gap-2">
+            <div
+              class="flex align-items-center justify-content-center border-round-xl surface-100 text-900 font-semibold"
+              style="width: 3rem; height: 3rem"
+            >
+              {{ initials(user.name) }}
+            </div>
+            <div class="mr-2">
+              <div class="font-semibold">{{ user.name }}</div>
+              <small class="text-color-secondary">{{ user.email }}</small>
+            </div>
+            <p-tag [value]="user.age + ' years old'" severity="secondary" />
+            <button
+              pButton
+              type="button"
+              icon="pi pi-sign-out"
+              label="Logout"
+              severity="secondary"
+              (click)="logout()"
+            ></button>
+          </div>
+        }
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        @for (item of navigationItems; track item.route) {
+          <button
+            pButton
+            type="button"
+            [icon]="item.icon"
+            [label]="item.label"
+            [outlined]="!isActive(item.route)"
+            [severity]="isActive(item.route) ? 'contrast' : 'secondary'"
+            (click)="go(item.route)"
+          ></button>
+        }
+      </div>
+    </div>
+  </p-card>
+</div>
+
+<main class="page-shell pb-5">
+  <router-outlet />
+</main>
+
+<p-scrolltop />
