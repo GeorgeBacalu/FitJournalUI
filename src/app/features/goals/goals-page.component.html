@@ -199,6 +199,20 @@
       </div>
     </div>
 
+    @if (editingGoalId) {
+      <div class="field">
+        <label class="field-label" for="goalStatus">Status</label>
+        <p-select
+          inputId="goalStatus"
+          formControlName="isAchieved"
+          [options]="goalStatusOptions"
+          optionLabel="label"
+          optionValue="value"
+          class="w-full"
+        />
+      </div>
+    }
+
     <div class="toolbar-actions justify-content-end mt-2">
       <button
         pButton

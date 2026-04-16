@@ -45,6 +45,10 @@ export class GoalsPageComponent implements OnInit {
   saving = false;
   submitted = false;
   readonly goalTypeOptions = GOAL_TYPE_OPTIONS;
+  readonly goalStatusOptions = [
+    { label: 'In progress', value: false },
+    { label: 'Achieved', value: true }
+  ];
   editingGoalId: string | null = null;
 
   readonly form = this.formBuilder.group({
@@ -61,7 +65,8 @@ export class GoalsPageComponent implements OnInit {
       Validators.max(250)
     ]),
     startDate: this.formBuilder.control<Date | null>(new Date(), Validators.required),
-    endDate: this.formBuilder.control<Date | null>(new Date(), Validators.required)
+    endDate: this.formBuilder.control<Date | null>(new Date(), Validators.required),
+    isAchieved: this.formBuilder.nonNullable.control(false)
   });
 
   constructor(
@@ -110,7 +115,8 @@ export class GoalsPageComponent implements OnInit {
       type: null,
       targetWeight: 70,
       startDate: new Date(),
-      endDate: new Date()
+      endDate: new Date(),
+      isAchieved: false
     });
   }
 
@@ -181,7 +187,11 @@ export class GoalsPageComponent implements OnInit {
     };
 
     const saveRequest$ = this.editingGoalId
-      ? this.goalService.update({ id: this.editingGoalId, ...request })
+      ? this.goalService.update({
+          id: this.editingGoalId,
+          ...request,
+          isAchieved: formValue.isAchieved
+        })
       : this.goalService.create(request);
 
     this.saving = true;
@@ -219,7 +229,8 @@ export class GoalsPageComponent implements OnInit {
             type: goal.type,
             targetWeight: goal.targetWeight,
             startDate: toDateValue(goal.startDate),
-            endDate: toDateValue(goal.endDate)
+            endDate: toDateValue(goal.endDate),
+            isAchieved: goal.isAchieved
           });
         },
         error: (error) =>

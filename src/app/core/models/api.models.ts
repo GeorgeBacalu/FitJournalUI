@@ -224,6 +224,7 @@ export interface AddGoalRequest {
 
 export interface EditGoalRequest extends AddGoalRequest {
   id: string;
+  isAchieved?: boolean | null;
 }
 
 export interface ShortProgressLog {
