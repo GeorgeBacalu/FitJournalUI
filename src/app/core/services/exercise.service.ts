@@ -1,9 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map, switchMap, tap } from 'rxjs/operators';
 import { API_BASE_URL, DEFAULT_PAGE_REQUEST } from '../constants/app.constants';
-import { Exercise, ExercisesResponse, ShortExercise } from '../models/api.models';
+import {
+  AddExerciseRequest,
+  Exercise,
+  ExercisesResponse,
+  MessageResponse,
+  ShortExercise
+} from '../models/api.models';
 import { BaseResourceService } from './base-resource.service';
 
 @Injectable({
@@ -30,6 +36,14 @@ export class ExerciseService extends BaseResourceService {
 
   getById(id: string) {
     return this.httpClient.get<Exercise>(`${this.endpoint}/${id}`);
+  }
+
+  create(request: AddExerciseRequest) {
+    return this.withLoading(
+      this.httpClient.post<MessageResponse>(this.endpoint, request).pipe(
+        switchMap((response) => this.load().pipe(map(() => response)))
+      )
+    );
   }
 
   findById(id: string) {

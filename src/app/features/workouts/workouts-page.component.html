@@ -177,6 +177,23 @@
   </div>
 
   <div class="col-12">
+    <div class="flex align-items-center justify-content-between gap-3 mb-3 flex-wrap">
+      <div>
+        <div class="font-semibold">Exercise catalog</div>
+        <small class="text-color-secondary">
+          Create standalone exercises and reuse them in any workout.
+        </small>
+      </div>
+      <button
+        pButton
+        type="button"
+        label="New exercise"
+        icon="pi pi-plus"
+        severity="secondary"
+        (click)="openStandaloneExerciseDialog()"
+      ></button>
+    </div>
+
     <p-card header="Exercise catalog">
       <p-table [value]="exerciseCatalog" responsiveLayout="scroll">
         <ng-template pTemplate="header">
@@ -284,6 +301,99 @@
         [label]="editingWorkoutId ? 'Save changes' : 'Create workout'"
         icon="pi pi-check"
         [loading]="savingWorkout"
+      ></button>
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog
+  [(visible)]="standaloneExerciseDialogVisible"
+  [modal]="true"
+  [style]="{ width: '36rem', maxWidth: '95vw' }"
+  header="New exercise"
+>
+  <form
+    [formGroup]="standaloneExerciseForm"
+    (ngSubmit)="saveStandaloneExercise()"
+    class="form-grid"
+  >
+    <div class="field">
+      <label class="field-label" for="catalogExerciseName">Name</label>
+      <input
+        id="catalogExerciseName"
+        pInputText
+        formControlName="name"
+        class="w-full"
+      />
+    </div>
+
+    <div class="grid">
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label class="field-label" for="catalogMuscleGroup">Muscle group</label>
+          <p-select
+            inputId="catalogMuscleGroup"
+            formControlName="muscleGroup"
+            [options]="muscleGroupOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select a muscle group"
+            class="w-full"
+          />
+        </div>
+      </div>
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label class="field-label" for="catalogDifficultyLevel">Difficulty</label>
+          <p-select
+            inputId="catalogDifficultyLevel"
+            formControlName="difficultyLevel"
+            [options]="difficultyOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select difficulty"
+            class="w-full"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="catalogDescription">Description</label>
+      <textarea
+        id="catalogDescription"
+        pTextarea
+        rows="3"
+        formControlName="description"
+        class="w-full"
+      ></textarea>
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="catalogNotes">Notes</label>
+      <textarea
+        id="catalogNotes"
+        pTextarea
+        rows="3"
+        formControlName="notes"
+        class="w-full"
+      ></textarea>
+    </div>
+
+    <div class="toolbar-actions justify-content-end mt-2">
+      <button
+        pButton
+        type="button"
+        label="Cancel"
+        severity="secondary"
+        (click)="standaloneExerciseDialogVisible = false"
+      ></button>
+      <button
+        pButton
+        type="submit"
+        label="Create exercise"
+        icon="pi pi-check"
+        [loading]="savingCatalogExercise"
       ></button>
     </div>
   </form>

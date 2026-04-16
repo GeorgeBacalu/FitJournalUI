@@ -85,6 +85,18 @@ export interface ExercisesResponse {
   totalCount: number;
 }
 
+export interface AddExerciseRequest {
+  name: string;
+  description?: string | null;
+  notes?: string | null;
+  muscleGroup: number;
+  difficultyLevel: number;
+}
+
+export interface EditExerciseRequest extends AddExerciseRequest {
+  id: string;
+}
+
 export interface ShortFoodItem {
   id: string;
   name: string;

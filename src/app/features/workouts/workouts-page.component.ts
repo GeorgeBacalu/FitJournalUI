@@ -14,7 +14,13 @@ import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
-import { DIFFICULTY_LABELS, MUSCLE_GROUP_LABELS } from '../../core/constants/options';
+import {
+  DIFFICULTY_LABELS,
+  DIFFICULTY_OPTIONS,
+  MUSCLE_GROUP_LABELS,
+  MUSCLE_GROUP_OPTIONS
+} from '../../core/constants/options';
+import { SessionService } from '../../core/services/session.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { ExerciseService } from '../../core/services/exercise.service';
 import { WorkoutExerciseService } from '../../core/services/workout-exercise.service';
@@ -46,9 +52,14 @@ import {
 })
 export class WorkoutsPageComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
+  readonly difficultyOptions = DIFFICULTY_OPTIONS;
+  readonly muscleGroupOptions = MUSCLE_GROUP_OPTIONS;
   exerciseCatalog: ShortExercise[] = [];
+  savingCatalogExercise = false;
   selectedWorkout: Workout | null = null;
   selectedWorkoutId: string | null = null;
+  standaloneExerciseDialogVisible = false;
+  standaloneExerciseSubmitted = false;
   savingExercise = false;
   savingWorkout = false;
   exerciseDialogVisible = false;
@@ -94,16 +105,32 @@ export class WorkoutsPageComponent implements OnInit {
     ])
   });
 
+  readonly standaloneExerciseForm = this.formBuilder.group({
+    name: this.formBuilder.nonNullable.control('', [
+      Validators.required,
+      Validators.maxLength(50)
+    ]),
+    description: this.formBuilder.nonNullable.control('', Validators.maxLength(250)),
+    notes: this.formBuilder.nonNullable.control('', Validators.maxLength(250)),
+    muscleGroup: this.formBuilder.control<number | null>(null, Validators.required),
+    difficultyLevel: this.formBuilder.control<number | null>(null, Validators.required)
+  });
+
   constructor(
     private readonly confirmationService: ConfirmationService,
     private readonly exerciseService: ExerciseService,
     private readonly notificationService: NotificationService,
+    private readonly sessionService: SessionService,
     private readonly workoutExerciseService: WorkoutExerciseService,
     private readonly workoutService: WorkoutService
   ) {}
 
   ngOnInit() {
     this.refresh();
+  }
+
+  get canManageExercises() {
+    return (this.sessionService.getCurrentRole() ?? '').toLowerCase() === 'admin';
   }
 
   difficultyLabel(value: number) {
@@ -130,6 +157,26 @@ export class WorkoutsPageComponent implements OnInit {
       sets: 3,
       reps: 10,
       weightUsed: 0
+    });
+  }
+
+  openStandaloneExerciseDialog() {
+    if (!this.canManageExercises) {
+      this.notificationService.warn(
+        'Admin role required',
+        'Your backend only allows admin accounts to create standalone exercises.'
+      );
+      return;
+    }
+
+    this.standaloneExerciseSubmitted = false;
+    this.standaloneExerciseDialogVisible = true;
+    this.standaloneExerciseForm.reset({
+      name: '',
+      description: '',
+      notes: '',
+      muscleGroup: null,
+      difficultyLevel: null
     });
   }
 
@@ -269,6 +316,43 @@ export class WorkoutsPageComponent implements OnInit {
         },
         error: (error) =>
           this.notificationService.fromHttpError(error, 'Exercise add failed')
+      });
+  }
+
+  saveStandaloneExercise() {
+    this.standaloneExerciseSubmitted = true;
+
+    if (this.standaloneExerciseForm.invalid) {
+      this.standaloneExerciseForm.markAllAsTouched();
+      return;
+    }
+
+    const formValue = this.standaloneExerciseForm.getRawValue();
+
+    if (formValue.muscleGroup == null || formValue.difficultyLevel == null) {
+      this.standaloneExerciseForm.markAllAsTouched();
+      return;
+    }
+
+    this.savingCatalogExercise = true;
+
+    this.exerciseService
+      .create({
+        name: formValue.name,
+        description: formValue.description || null,
+        notes: formValue.notes || null,
+        muscleGroup: formValue.muscleGroup,
+        difficultyLevel: formValue.difficultyLevel
+      })
+      .pipe(finalize(() => (this.savingCatalogExercise = false)))
+      .subscribe({
+        next: (response) => {
+          this.notificationService.success('Exercise created', response.message);
+          this.standaloneExerciseDialogVisible = false;
+          this.refresh(this.selectedWorkoutId);
+        },
+        error: (error) =>
+          this.notificationService.fromHttpError(error, 'Exercise creation failed')
       });
   }
 
