@@ -35,6 +35,7 @@ export class DashboardPageComponent implements OnInit {
   foodLogs: ShortFoodLog[] = [];
   goals: ShortGoal[] = [];
   progressLogs: ShortProgressLog[] = [];
+  refreshing = false;
   user: User | null = null;
   workouts: ShortWorkout[] = [];
   loading = false;
@@ -51,6 +52,7 @@ export class DashboardPageComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.hydrateFromCache();
     this.refresh();
   }
 
@@ -67,7 +69,9 @@ export class DashboardPageComponent implements OnInit {
   }
 
   refresh() {
-    this.loading = true;
+    this.hydrateFromCache();
+    this.loading = !this.hasCachedData();
+    this.refreshing = true;
 
     forkJoin({
       user: this.userService.loadCurrentUser(),
@@ -78,7 +82,12 @@ export class DashboardPageComponent implements OnInit {
       exercises: this.exerciseService.load(),
       foodItems: this.foodItemService.load()
     })
-      .pipe(finalize(() => (this.loading = false)))
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this.refreshing = false;
+        })
+      )
       .subscribe({
         next: (result) => {
           this.user = result.user;
@@ -122,6 +131,38 @@ export class DashboardPageComponent implements OnInit {
     return [...items].sort(
       (left, right) =>
         new Date(selector(right)).getTime() - new Date(selector(left)).getTime()
+    );
+  }
+
+  private hasCachedData() {
+    return (
+      !!this.user ||
+      this.workouts.length > 0 ||
+      this.goals.length > 0 ||
+      this.progressLogs.length > 0 ||
+      this.foodLogs.length > 0 ||
+      this.exercises.length > 0 ||
+      this.foodItems.length > 0
+    );
+  }
+
+  private hydrateFromCache() {
+    this.user = this.userService.getCurrentUserSnapshot();
+    this.workouts = this.sortByDateDesc(
+      this.workoutService.getItemsSnapshot(),
+      (item) => item.startedAt
+    );
+    this.goals = this.sortByDateDesc(this.goalService.getItemsSnapshot(), (item) => item.endDate);
+    this.progressLogs = this.sortByDateDesc(
+      this.progressLogService.getItemsSnapshot(),
+      (item) => item.date
+    );
+    this.foodLogs = this.sortByDateDesc(this.foodLogService.getItemsSnapshot(), (item) => item.date);
+    this.exercises = [...this.exerciseService.getItemsSnapshot()].sort((left, right) =>
+      left.name.localeCompare(right.name)
+    );
+    this.foodItems = [...this.foodItemService.getItemsSnapshot()].sort((left, right) =>
+      left.name.localeCompare(right.name)
     );
   }
 }
