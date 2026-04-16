@@ -1,0 +1,188 @@
+<div class="flex align-items-start justify-content-between gap-3 mb-4 flex-wrap">
+  <div>
+    <h2 class="page-title">Profile</h2>
+    <p class="page-subtitle">Manage your account details, password and account status.</p>
+  </div>
+
+  <button
+    pButton
+    type="button"
+    label="Reload"
+    icon="pi pi-refresh"
+    severity="secondary"
+    [loading]="loading"
+    (click)="loadProfile()"
+  ></button>
+</div>
+
+@if (user) {
+  <div class="grid">
+    <div class="col-12 lg:col-7">
+      <p-card header="Personal details">
+        <div class="flex flex-wrap gap-2 mb-4">
+          <p-tag [value]="user.age + ' years old'" severity="secondary" />
+          <p-tag [value]="user.height + ' cm'" severity="secondary" />
+          <p-tag [value]="user.weight + ' kg'" severity="secondary" />
+        </div>
+
+        <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="form-grid">
+          <div class="field">
+            <label class="field-label" for="profileName">Name</label>
+            <input id="profileName" pInputText formControlName="name" class="w-full" />
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="profileEmail">Email</label>
+            <input id="profileEmail" pInputText formControlName="email" class="w-full" />
+          </div>
+
+          <div class="grid">
+            <div class="col-12 md:col-6">
+              <div class="field">
+                <label class="field-label" for="profilePhone">Phone</label>
+                <input id="profilePhone" pInputText formControlName="phone" class="w-full" />
+              </div>
+            </div>
+            <div class="col-12 md:col-6">
+              <div class="field">
+                <label class="field-label" for="profileBirthday">Birthday</label>
+                <p-datepicker
+                  inputId="profileBirthday"
+                  formControlName="birthday"
+                  [showIcon]="true"
+                  appendTo="body"
+                  styleClass="w-full"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="grid">
+            <div class="col-12 md:col-4">
+              <div class="field">
+                <label class="field-label" for="profileHeight">Height (cm)</label>
+                <p-inputnumber
+                  inputId="profileHeight"
+                  formControlName="height"
+                  [min]="120"
+                  [max]="250"
+                  [minFractionDigits]="0"
+                  [maxFractionDigits]="0"
+                  styleClass="w-full"
+                />
+              </div>
+            </div>
+            <div class="col-12 md:col-4">
+              <div class="field">
+                <label class="field-label" for="profileWeight">Weight (kg)</label>
+                <p-inputnumber
+                  inputId="profileWeight"
+                  formControlName="weight"
+                  [min]="25"
+                  [max]="250"
+                  [minFractionDigits]="0"
+                  [maxFractionDigits]="1"
+                  styleClass="w-full"
+                />
+              </div>
+            </div>
+            <div class="col-12 md:col-4">
+              <div class="field">
+                <label class="field-label" for="profileGender">Gender</label>
+                <p-select
+                  inputId="profileGender"
+                  formControlName="gender"
+                  [options]="genderOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="w-full"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="toolbar-actions justify-content-end mt-2">
+            <button
+              pButton
+              type="submit"
+              label="Save profile"
+              icon="pi pi-check"
+              [loading]="savingProfile"
+            ></button>
+          </div>
+        </form>
+      </p-card>
+    </div>
+
+    <div class="col-12 lg:col-5">
+      <div class="flex flex-column gap-4">
+        <p-card header="Change password">
+          <form [formGroup]="passwordForm" (ngSubmit)="savePassword()" class="form-grid">
+            <div class="field">
+              <label class="field-label" for="currentPassword">Current password</label>
+              <p-password
+                inputId="currentPassword"
+                formControlName="currentPassword"
+                [feedback]="false"
+                [toggleMask]="true"
+                styleClass="w-full"
+                inputStyleClass="w-full"
+              />
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="newPassword">New password</label>
+              <p-password
+                inputId="newPassword"
+                formControlName="newPassword"
+                [feedback]="false"
+                [toggleMask]="true"
+                styleClass="w-full"
+                inputStyleClass="w-full"
+              />
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="confirmedPassword">Confirm new password</label>
+              <p-password
+                inputId="confirmedPassword"
+                formControlName="confirmedPassword"
+                [feedback]="false"
+                [toggleMask]="true"
+                styleClass="w-full"
+                inputStyleClass="w-full"
+              />
+              @if (passwordsMismatch()) {
+                <small class="field-error">Passwords must match.</small>
+              }
+            </div>
+
+            <button
+              pButton
+              type="submit"
+              label="Update password"
+              icon="pi pi-lock"
+              [loading]="savingPassword"
+            ></button>
+          </form>
+        </p-card>
+
+        <p-card header="Account status">
+          <div class="flex flex-column gap-3">
+            <p class="m-0 text-color-secondary">
+              If you no longer want to keep this account active, you can deactivate it here.
+            </p>
+            <button
+              pButton
+              type="button"
+              label="Deactivate account"
+              icon="pi pi-ban"
+              severity="danger"
+              (click)="deactivateAccount()"
+            ></button>
+          </div>
+        </p-card>
+      </div>
+    </div>
+  </div>
+}
