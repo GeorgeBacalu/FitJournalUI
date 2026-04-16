@@ -1,0 +1,374 @@
+<div class="flex align-items-start justify-content-between gap-3 mb-4 flex-wrap">
+  <div>
+    <h2 class="page-title">Workouts</h2>
+    <p class="page-subtitle">Create workouts, review their details and attach exercises.</p>
+  </div>
+
+  <div class="toolbar-actions">
+    <button
+      pButton
+      type="button"
+      label="Refresh"
+      icon="pi pi-refresh"
+      severity="secondary"
+      [loading]="loading"
+      (click)="refresh()"
+    ></button>
+    <button
+      pButton
+      type="button"
+      label="New workout"
+      icon="pi pi-plus"
+      (click)="openNewWorkoutDialog()"
+    ></button>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="col-12 xl:col-7">
+    <p-card header="Workout list">
+      <p-table [value]="workouts" dataKey="id" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Name</th>
+            <th>Started</th>
+            <th>Duration</th>
+            <th>Actions</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-workout>
+          <tr [class.surface-100]="selectedWorkoutId === workout.id">
+            <td>
+              <div class="font-semibold">{{ workout.name }}</div>
+            </td>
+            <td>{{ workout.startedAt | date: 'medium' }}</td>
+            <td>{{ workout.durationMinutes }} min</td>
+            <td>
+              <div class="table-actions">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-eye"
+                  label="Open"
+                  severity="secondary"
+                  size="small"
+                  (click)="selectWorkout(workout.id)"
+                ></button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-pencil"
+                  label="Edit"
+                  severity="secondary"
+                  size="small"
+                  (click)="startEditWorkout(workout.id)"
+                ></button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-trash"
+                  label="Delete"
+                  severity="danger"
+                  size="small"
+                  (click)="removeWorkout(workout)"
+                ></button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="4">
+              <p class="section-empty">No workouts created yet.</p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  </div>
+
+  <div class="col-12 xl:col-5">
+    <p-card header="Selected workout">
+      @if (selectedWorkout) {
+        <div class="flex flex-column gap-3">
+          <div class="flex justify-content-between align-items-start gap-3 flex-wrap">
+            <div>
+              <div class="font-semibold text-xl">{{ selectedWorkout.name }}</div>
+              <small class="text-color-secondary">
+                {{ selectedWorkout.startedAt | date: 'full' }}
+              </small>
+            </div>
+            <p-tag [value]="selectedWorkout.durationMinutes + ' min'" severity="secondary" />
+          </div>
+
+          <div class="grid">
+            <div class="col-12 md:col-6">
+              <div class="font-semibold mb-2">Description</div>
+              <div class="text-color-secondary">
+                {{ selectedWorkout.description || 'No description provided.' }}
+              </div>
+            </div>
+            <div class="col-12 md:col-6">
+              <div class="font-semibold mb-2">Notes</div>
+              <div class="text-color-secondary">
+                {{ selectedWorkout.notes || 'No notes added yet.' }}
+              </div>
+            </div>
+          </div>
+
+          <div class="flex align-items-center justify-content-between gap-3 flex-wrap">
+            <div>
+              <div class="font-semibold">Workout exercises</div>
+              <small class="text-color-secondary">
+                Add and remove exercises from the selected workout.
+              </small>
+            </div>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-plus"
+              label="Add exercise"
+              (click)="openExerciseDialog()"
+            ></button>
+          </div>
+
+          <p-table [value]="workoutExercises" responsiveLayout="scroll">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Exercise</th>
+                <th>Sets</th>
+                <th>Reps</th>
+                <th>Weight</th>
+                <th>Actions</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-entry>
+              <tr>
+                <td>{{ exerciseName(entry.exerciseId) }}</td>
+                <td>{{ entry.sets }}</td>
+                <td>{{ entry.reps }}</td>
+                <td>{{ entry.weightUsed }} kg</td>
+                <td>
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-trash"
+                    label="Remove"
+                    severity="danger"
+                    size="small"
+                    (click)="removeWorkoutExercise(entry)"
+                  ></button>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="5">
+                  <p class="section-empty">No exercises added to this workout yet.</p>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      } @else {
+        <p class="section-empty">Pick a workout to review its details.</p>
+      }
+    </p-card>
+  </div>
+
+  <div class="col-12">
+    <p-card header="Exercise catalog">
+      <p-table [value]="exerciseCatalog" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Name</th>
+            <th>Muscle group</th>
+            <th>Difficulty</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-exercise>
+          <tr>
+            <td>{{ exercise.name }}</td>
+            <td>{{ muscleGroupLabel(exercise.muscleGroup) }}</td>
+            <td>{{ difficultyLabel(exercise.difficultyLevel) }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="3">
+              <p class="section-empty">Exercise catalog is empty.</p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  </div>
+</div>
+
+<p-dialog
+  [(visible)]="workoutDialogVisible"
+  [modal]="true"
+  [style]="{ width: '40rem', maxWidth: '95vw' }"
+  [header]="editingWorkoutId ? 'Edit workout' : 'New workout'"
+>
+  <form [formGroup]="workoutForm" (ngSubmit)="saveWorkout()" class="form-grid">
+    <div class="field">
+      <label class="field-label" for="workoutName">Name</label>
+      <input id="workoutName" pInputText formControlName="name" class="w-full" />
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="workoutDescription">Description</label>
+      <textarea
+        id="workoutDescription"
+        pTextarea
+        rows="3"
+        formControlName="description"
+        class="w-full"
+      ></textarea>
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="workoutNotes">Notes</label>
+      <textarea
+        id="workoutNotes"
+        pTextarea
+        rows="3"
+        formControlName="notes"
+        class="w-full"
+      ></textarea>
+    </div>
+
+    <div class="grid">
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label class="field-label" for="durationMinutes">Duration (minutes)</label>
+          <p-inputnumber
+            inputId="durationMinutes"
+            formControlName="durationMinutes"
+            [min]="5"
+            [max]="300"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="0"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label class="field-label" for="startedAt">Started at</label>
+          <p-datepicker
+            inputId="startedAt"
+            formControlName="startedAt"
+            [showIcon]="true"
+            [showTime]="true"
+            hourFormat="24"
+            appendTo="body"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="toolbar-actions justify-content-end mt-2">
+      <button
+        pButton
+        type="button"
+        label="Cancel"
+        severity="secondary"
+        (click)="workoutDialogVisible = false"
+      ></button>
+      <button
+        pButton
+        type="submit"
+        [label]="editingWorkoutId ? 'Save changes' : 'Create workout'"
+        icon="pi pi-check"
+        [loading]="savingWorkout"
+      ></button>
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog
+  [(visible)]="exerciseDialogVisible"
+  [modal]="true"
+  [style]="{ width: '32rem', maxWidth: '95vw' }"
+  header="Add exercise"
+>
+  <form [formGroup]="workoutExerciseForm" (ngSubmit)="saveWorkoutExercise()" class="form-grid">
+    <div class="field">
+      <label class="field-label" for="exerciseId">Exercise</label>
+      <p-select
+        inputId="exerciseId"
+        formControlName="exerciseId"
+        [options]="exerciseCatalog"
+        optionLabel="name"
+        optionValue="id"
+        placeholder="Select an exercise"
+        class="w-full"
+      />
+    </div>
+
+    <div class="grid">
+      <div class="col-12 md:col-4">
+        <div class="field">
+          <label class="field-label" for="sets">Sets</label>
+          <p-inputnumber
+            inputId="sets"
+            formControlName="sets"
+            [min]="1"
+            [max]="10"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="0"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+      <div class="col-12 md:col-4">
+        <div class="field">
+          <label class="field-label" for="reps">Reps</label>
+          <p-inputnumber
+            inputId="reps"
+            formControlName="reps"
+            [min]="1"
+            [max]="50"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="0"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+      <div class="col-12 md:col-4">
+        <div class="field">
+          <label class="field-label" for="weightUsed">Weight (kg)</label>
+          <p-inputnumber
+            inputId="weightUsed"
+            formControlName="weightUsed"
+            [min]="0"
+            [max]="500"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="2"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="toolbar-actions justify-content-end mt-2">
+      <button
+        pButton
+        type="button"
+        label="Cancel"
+        severity="secondary"
+        (click)="exerciseDialogVisible = false"
+      ></button>
+      <button
+        pButton
+        type="submit"
+        label="Add exercise"
+        icon="pi pi-check"
+        [loading]="savingExercise"
+      ></button>
+    </div>
+  </form>
+</p-dialog>
