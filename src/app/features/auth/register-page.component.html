@@ -1,0 +1,147 @@
+<div class="auth-shell">
+  <p-card class="auth-panel">
+    <div class="flex flex-column align-items-center text-center gap-3 mb-4">
+      <img alt="FitJournal logo" class="logo-mark" src="/fit-journal-logo.ico" />
+      <div>
+        <h1 class="page-title">Create your account</h1>
+        <p class="page-subtitle">
+          Start tracking your training, nutrition and body progress in one place.
+        </p>
+      </div>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
+      <div class="field">
+        <label class="field-label" for="name">Full name</label>
+        <input id="name" pInputText formControlName="name" class="w-full" />
+        @if (hasError(form.controls.name)) {
+          <small class="field-error">Name is required and must stay under 50 characters.</small>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="email">Email</label>
+        <input id="email" pInputText formControlName="email" class="w-full" />
+        @if (hasError(form.controls.email)) {
+          <small class="field-error">Enter a valid email address.</small>
+        }
+      </div>
+
+      <div class="grid">
+        <div class="col-12 md:col-6">
+          <div class="field">
+            <label class="field-label" for="password">Password</label>
+            <p-password
+              inputId="password"
+              formControlName="password"
+              [toggleMask]="true"
+              [feedback]="false"
+              styleClass="w-full"
+              inputStyleClass="w-full"
+            />
+          </div>
+        </div>
+        <div class="col-12 md:col-6">
+          <div class="field">
+            <label class="field-label" for="confirmedPassword">Confirm password</label>
+            <p-password
+              inputId="confirmedPassword"
+              formControlName="confirmedPassword"
+              [toggleMask]="true"
+              [feedback]="false"
+              styleClass="w-full"
+              inputStyleClass="w-full"
+            />
+            @if (hasError(form.controls.confirmedPassword) || passwordsMismatch()) {
+              <small class="field-error">Passwords must match.</small>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="col-12 md:col-6">
+          <div class="field">
+            <label class="field-label" for="phone">Phone</label>
+            <input id="phone" pInputText formControlName="phone" class="w-full" />
+            @if (hasError(form.controls.phone)) {
+              <small class="field-error">Use a valid phone number.</small>
+            }
+          </div>
+        </div>
+        <div class="col-12 md:col-6">
+          <div class="field">
+            <label class="field-label" for="birthday">Birthday</label>
+            <p-datepicker
+              inputId="birthday"
+              formControlName="birthday"
+              [showIcon]="true"
+              appendTo="body"
+              styleClass="w-full"
+            />
+            @if (hasError(form.controls.birthday)) {
+              <small class="field-error">Choose your birthday.</small>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="col-12 md:col-4">
+          <div class="field">
+            <label class="field-label" for="height">Height (cm)</label>
+            <p-inputnumber
+              inputId="height"
+              formControlName="height"
+              [min]="120"
+              [max]="250"
+              [minFractionDigits]="0"
+              [maxFractionDigits]="0"
+              styleClass="w-full"
+            />
+          </div>
+        </div>
+        <div class="col-12 md:col-4">
+          <div class="field">
+            <label class="field-label" for="weight">Weight (kg)</label>
+            <p-inputnumber
+              inputId="weight"
+              formControlName="weight"
+              [min]="25"
+              [max]="250"
+              [minFractionDigits]="0"
+              [maxFractionDigits]="1"
+              styleClass="w-full"
+            />
+          </div>
+        </div>
+        <div class="col-12 md:col-4">
+          <div class="field">
+            <label class="field-label" for="gender">Gender</label>
+            <p-select
+              inputId="gender"
+              formControlName="gender"
+              [options]="genderOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select gender"
+              class="w-full"
+            />
+          </div>
+        </div>
+      </div>
+
+      <button
+        pButton
+        type="submit"
+        label="Register"
+        icon="pi pi-user-plus"
+        [loading]="submitting"
+      ></button>
+    </form>
+
+    <div class="mt-4 text-center">
+      <a routerLink="/login" class="font-medium text-primary">Already have an account? Sign in</a>
+    </div>
+  </p-card>
+</div>
