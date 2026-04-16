@@ -1,0 +1,207 @@
+<div class="flex align-items-start justify-content-between gap-3 mb-4 flex-wrap">
+  <div>
+    <h2 class="page-title">Dashboard</h2>
+    <p class="page-subtitle">
+      {{ user?.name || 'Your account' }} at a glance across training, goals, progress and nutrition.
+    </p>
+  </div>
+
+  <button
+    pButton
+    type="button"
+    label="Refresh"
+    icon="pi pi-refresh"
+    severity="secondary"
+    [loading]="loading"
+    (click)="refresh()"
+  ></button>
+</div>
+
+@if (loading) {
+  <p-card>
+    <div class="py-6 text-center">
+      <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
+    </div>
+  </p-card>
+} @else {
+  <div class="grid">
+    <div class="col-12 md:col-6 xl:col-3">
+      <p-card class="h-full">
+        <p class="summary-value">{{ workouts.length }}</p>
+        <p class="summary-caption">Logged workouts</p>
+      </p-card>
+    </div>
+    <div class="col-12 md:col-6 xl:col-3">
+      <p-card class="h-full">
+        <p class="summary-value">{{ activeGoalsCount }}</p>
+        <p class="summary-caption">Active goals</p>
+      </p-card>
+    </div>
+    <div class="col-12 md:col-6 xl:col-3">
+      <p-card class="h-full">
+        <p class="summary-value">{{ progressLogs.length }}</p>
+        <p class="summary-caption">Progress entries</p>
+      </p-card>
+    </div>
+    <div class="col-12 md:col-6 xl:col-3">
+      <p-card class="h-full">
+        <p class="summary-value">{{ foodLogs.length }}</p>
+        <p class="summary-caption">Nutrition logs</p>
+      </p-card>
+    </div>
+    <div class="col-12 md:col-6 xl:col-3">
+      <p-card class="h-full">
+        <p class="summary-value">{{ exercises.length }}</p>
+        <p class="summary-caption">Exercises in catalog</p>
+      </p-card>
+    </div>
+    <div class="col-12 md:col-6 xl:col-3">
+      <p-card class="h-full">
+        <p class="summary-value">{{ foodItems.length }}</p>
+        <p class="summary-caption">Food items in catalog</p>
+      </p-card>
+    </div>
+    <div class="col-12 md:col-6 xl:col-3">
+      <p-card class="h-full">
+        <p class="summary-value">{{ latestProgressLog?.weight ?? '-' }}</p>
+        <p class="summary-caption">Latest weight (kg)</p>
+      </p-card>
+    </div>
+    <div class="col-12 md:col-6 xl:col-3">
+      <p-card class="h-full">
+        <p class="summary-value">{{ latestWorkout?.durationMinutes ?? '-' }}</p>
+        <p class="summary-caption">Latest workout duration (min)</p>
+      </p-card>
+    </div>
+  </div>
+
+  <div class="grid mt-1">
+    <div class="col-12 lg:col-4">
+      <p-card header="Recent workouts" class="h-full">
+        @if (workouts.length) {
+          <div class="flex flex-column gap-3">
+            @for (workout of workouts | slice: 0 : 4; track workout.id) {
+              <div class="border-1 surface-border border-round-xl p-3">
+                <div class="font-semibold">{{ workout.name }}</div>
+                <small class="text-color-secondary">
+                  {{ workout.startedAt | date: 'medium' }} • {{ workout.durationMinutes }} min
+                </small>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="section-empty">No workouts logged yet.</p>
+        }
+      </p-card>
+    </div>
+
+    <div class="col-12 lg:col-4">
+      <p-card header="Goals" class="h-full">
+        @if (goals.length) {
+          <div class="flex flex-column gap-3">
+            @for (goal of goals | slice: 0 : 4; track goal.id) {
+              <div class="border-1 surface-border border-round-xl p-3">
+                <div class="flex justify-content-between align-items-start gap-3">
+                  <div>
+                    <div class="font-semibold">{{ goal.name }}</div>
+                    <small class="text-color-secondary">
+                      {{ goalTypeLabel(goal.type) }} •
+                      {{ (goal.endDate + 'T00:00:00') | date: 'mediumDate' }}
+                    </small>
+                  </div>
+                  <p-tag
+                    [severity]="goalSeverity(goal)"
+                    [value]="goal.isAchieved ? 'Achieved' : 'In progress'"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="section-empty">No goals created yet.</p>
+        }
+      </p-card>
+    </div>
+
+    <div class="col-12 lg:col-4">
+      <p-card header="Nutrition" class="h-full">
+        @if (foodLogs.length) {
+          <div class="flex flex-column gap-3">
+            @for (foodLog of foodLogs | slice: 0 : 4; track foodLog.id) {
+              <div class="border-1 surface-border border-round-xl p-3">
+                <div class="font-semibold">{{ foodLogName(foodLog.id) }}</div>
+                <small class="text-color-secondary">
+                  {{ foodLog.date | date: 'medium' }} • {{ foodLog.servings }} servings •
+                  {{ foodLog.quantity }} g
+                </small>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="section-empty">No food logs recorded yet.</p>
+        }
+      </p-card>
+    </div>
+
+    <div class="col-12 lg:col-6">
+      <p-card header="Latest progress" class="h-full">
+        @if (latestProgressLog) {
+          <div class="grid">
+            <div class="col-6 md:col-3">
+              <p class="summary-value text-3xl">{{ latestProgressLog.weight }}</p>
+              <p class="summary-caption">Weight</p>
+            </div>
+            <div class="col-6 md:col-3">
+              <p class="summary-value text-3xl">{{ latestProgressLog.bodyFat }}</p>
+              <p class="summary-caption">Body fat %</p>
+            </div>
+            <div class="col-12 md:col-6 flex align-items-end">
+              <div>
+                <div class="font-semibold">Last check-in</div>
+                <small class="text-color-secondary">
+                  {{ (latestProgressLog.date + 'T00:00:00') | date: 'fullDate' }}
+                </small>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <p class="section-empty">Add a progress entry to start comparing your results.</p>
+        }
+      </p-card>
+    </div>
+
+    <div class="col-12 lg:col-6">
+      <p-card header="Catalog snapshot" class="h-full">
+        @if (exercises.length || foodItems.length) {
+          <div class="grid">
+            <div class="col-12 md:col-6">
+              <div class="font-semibold mb-3">Exercises</div>
+              <div class="flex flex-column gap-2">
+                @for (exercise of exercises | slice: 0 : 4; track exercise.id) {
+                  <div class="border-1 surface-border border-round-xl p-3">
+                    <div class="font-semibold">{{ exercise.name }}</div>
+                  </div>
+                }
+              </div>
+            </div>
+            <div class="col-12 md:col-6">
+              <div class="font-semibold mb-3">Food items</div>
+              <div class="flex flex-column gap-2">
+                @for (foodItem of foodItems | slice: 0 : 4; track foodItem.id) {
+                  <div class="border-1 surface-border border-round-xl p-3">
+                    <div class="font-semibold">{{ foodItem.name }}</div>
+                    <small class="text-color-secondary">
+                      {{ foodCategoryLabel(foodItem) }}
+                    </small>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        } @else {
+          <p class="section-empty">Catalog data is not available yet.</p>
+        }
+      </p-card>
+    </div>
+  </div>
+}
