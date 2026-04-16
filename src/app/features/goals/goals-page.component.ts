@@ -41,6 +41,7 @@ export class GoalsPageComponent implements OnInit {
   dialogVisible = false;
   goals: ShortGoal[] = [];
   loading = false;
+  refreshing = false;
   saving = false;
   submitted = false;
   readonly goalTypeOptions = GOAL_TYPE_OPTIONS;
@@ -70,6 +71,7 @@ export class GoalsPageComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.hydrateFromCache();
     this.refresh();
   }
 
@@ -113,11 +115,12 @@ export class GoalsPageComponent implements OnInit {
   }
 
   refresh() {
-    this.loading = true;
+    this.hydrateFromCache();
+    this.refreshing = true;
 
     this.goalService
       .load()
-      .pipe(finalize(() => (this.loading = false)))
+      .pipe(finalize(() => (this.refreshing = false)))
       .subscribe({
         next: (goals) => {
           this.goals = [...goals].sort(
@@ -222,5 +225,11 @@ export class GoalsPageComponent implements OnInit {
         error: (error) =>
           this.notificationService.fromHttpError(error, 'Goal details failed to load')
       });
+  }
+
+  private hydrateFromCache() {
+    this.goals = [...this.goalService.getItemsSnapshot()].sort(
+      (left, right) => new Date(right.endDate).getTime() - new Date(left.endDate).getTime()
+    );
   }
 }
