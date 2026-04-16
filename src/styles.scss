@@ -118,6 +118,56 @@ a {
   flex-wrap: wrap;
 }
 
+.workout-exercises-table .p-datatable-thead > tr > th,
+.workout-exercises-table .p-datatable-tbody > tr > td {
+  padding: 0.65rem 0.45rem;
+}
+
+.workout-exercises-table .metric-column,
+.workout-exercises-table .weight-column,
+.workout-exercises-table .workout-exercise-actions-column {
+  white-space: nowrap;
+}
+
+.workout-exercises-table .metric-column {
+  width: 3.75rem;
+}
+
+.workout-exercises-table .weight-column {
+  width: 4.75rem;
+}
+
+.workout-exercises-table .exercise-name-cell {
+  min-width: 0;
+}
+
+.workout-exercises-table .workout-exercise-actions-column {
+  width: 1%;
+}
+
+.workout-exercises-table .table-actions {
+  gap: 0.35rem;
+  flex-wrap: nowrap;
+}
+
+.workout-exercises-table .table-actions .p-button {
+  padding: 0.4rem 0.6rem;
+}
+
+.exercise-editor-dialog .p-dialog-content {
+  overflow-x: hidden;
+}
+
+.dialog-grid {
+  margin-left: -0.25rem;
+  margin-right: -0.25rem;
+}
+
+.dialog-grid > [class*='col-'] {
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
 .w-full {
   width: 100%;
 }

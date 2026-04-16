@@ -68,6 +68,7 @@ export class WorkoutsPageComponent implements OnInit {
   savingWorkout = false;
   exerciseDialogVisible = false;
   exerciseSubmitted = false;
+  editingWorkoutExercise: ShortWorkoutExercise | null = null;
   editingWorkoutExerciseId: string | null = null;
   loading = false;
   submitted = false;
@@ -138,6 +139,10 @@ export class WorkoutsPageComponent implements OnInit {
     return (this.sessionService.getCurrentRole() ?? '').toLowerCase() === 'admin';
   }
 
+  get isEditingWorkoutExercise() {
+    return this.editingWorkoutExercise !== null;
+  }
+
   difficultyLabel(value: number) {
     return DIFFICULTY_LABELS[value] ?? 'Unknown';
   }
@@ -155,6 +160,7 @@ export class WorkoutsPageComponent implements OnInit {
       return;
     }
 
+    this.editingWorkoutExercise = null;
     this.editingWorkoutExerciseId = null;
     this.exerciseSubmitted = false;
     this.exerciseDialogVisible = true;
@@ -337,6 +343,16 @@ export class WorkoutsPageComponent implements OnInit {
     }
 
     const editingWorkoutExerciseId = this.editingWorkoutExerciseId;
+    const isEditingWorkoutExercise = this.isEditingWorkoutExercise;
+
+    if (isEditingWorkoutExercise && !editingWorkoutExerciseId) {
+      this.notificationService.error(
+        'Exercise edit unavailable',
+        'The workout exercise id is missing from the API response. Restart the backend, refresh the page, and try again.'
+      );
+      return;
+    }
+
     this.savingExercise = true;
 
     const request = {
@@ -359,7 +375,7 @@ export class WorkoutsPageComponent implements OnInit {
       .subscribe({
         next: (response) => {
           this.notificationService.success(
-            editingWorkoutExerciseId ? 'Exercise updated' : 'Exercise added',
+            isEditingWorkoutExercise ? 'Exercise updated' : 'Exercise added',
             response.message
           );
           this.exerciseDialogVisible = false;
@@ -466,6 +482,7 @@ export class WorkoutsPageComponent implements OnInit {
   }
 
   startEditWorkoutExercise(entry: ShortWorkoutExercise) {
+    this.editingWorkoutExercise = entry;
     this.editingWorkoutExerciseId = entry.id;
     this.exerciseSubmitted = false;
     this.exerciseDialogVisible = true;
@@ -479,6 +496,7 @@ export class WorkoutsPageComponent implements OnInit {
   }
 
   handleWorkoutExerciseDialogHide() {
+    this.editingWorkoutExercise = null;
     this.editingWorkoutExerciseId = null;
     this.workoutExerciseForm.controls.exerciseId.enable();
   }

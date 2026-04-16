@@ -132,23 +132,27 @@
             ></button>
           </div>
 
-          <p-table [value]="workoutExercises" responsiveLayout="scroll">
+          <p-table
+            [value]="workoutExercises"
+            responsiveLayout="scroll"
+            styleClass="workout-exercises-table"
+          >
             <ng-template pTemplate="header">
               <tr>
                 <th>Exercise</th>
-                <th>Sets</th>
-                <th>Reps</th>
-                <th>Weight</th>
-                <th>Actions</th>
+                <th class="metric-column">Sets</th>
+                <th class="metric-column">Reps</th>
+                <th class="weight-column">Weight</th>
+                <th class="workout-exercise-actions-column">Actions</th>
               </tr>
             </ng-template>
             <ng-template pTemplate="body" let-entry>
               <tr>
-                <td>{{ exerciseName(entry.exerciseId) }}</td>
-                <td>{{ entry.sets }}</td>
-                <td>{{ entry.reps }}</td>
-                <td>{{ entry.weightUsed }} kg</td>
-                <td>
+                <td class="exercise-name-cell">{{ exerciseName(entry.exerciseId) }}</td>
+                <td class="metric-column">{{ entry.sets }}</td>
+                <td class="metric-column">{{ entry.reps }}</td>
+                <td class="weight-column">{{ entry.weightUsed }} kg</td>
+                <td class="workout-exercise-actions-column">
                   <div class="table-actions">
                     <button
                       pButton
@@ -451,8 +455,9 @@
 <p-dialog
   [(visible)]="exerciseDialogVisible"
   [modal]="true"
-  [style]="{ width: '32rem', maxWidth: '95vw' }"
-  [header]="editingWorkoutExerciseId ? 'Edit exercise' : 'Add exercise'"
+  [style]="{ width: '34rem', maxWidth: '95vw' }"
+  [header]="isEditingWorkoutExercise ? 'Edit Exercise' : 'Add Exercise'"
+  styleClass="exercise-editor-dialog"
   (onHide)="handleWorkoutExerciseDialogHide()"
 >
   <form [formGroup]="workoutExerciseForm" (ngSubmit)="saveWorkoutExercise()" class="form-grid">
@@ -469,7 +474,7 @@
       />
     </div>
 
-    <div class="grid">
+    <div class="grid dialog-grid">
       <div class="col-12 md:col-4">
         <div class="field">
           <label class="field-label" for="sets">Sets</label>
@@ -525,7 +530,7 @@
       <button
         pButton
         type="submit"
-        [label]="editingWorkoutExerciseId ? 'Save changes' : 'Add exercise'"
+        [label]="isEditingWorkoutExercise ? 'Save Changes' : 'Add Exercise'"
         icon="pi pi-check"
         [loading]="savingExercise"
       ></button>
