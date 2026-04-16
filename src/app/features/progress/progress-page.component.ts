@@ -32,6 +32,7 @@ export class ProgressPageComponent implements OnInit {
   dialogVisible = false;
   loading = false;
   logs: ShortProgressLog[] = [];
+  refreshing = false;
   saving = false;
   submitted = false;
   editingLogId: string | null = null;
@@ -72,6 +73,7 @@ export class ProgressPageComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.hydrateFromCache();
     this.refresh();
   }
 
@@ -102,11 +104,12 @@ export class ProgressPageComponent implements OnInit {
   }
 
   refresh() {
-    this.loading = true;
+    this.hydrateFromCache();
+    this.refreshing = true;
 
     this.progressLogService
       .load()
-      .pipe(finalize(() => (this.loading = false)))
+      .pipe(finalize(() => (this.refreshing = false)))
       .subscribe({
         next: (logs) => {
           this.logs = [...logs].sort(
@@ -213,5 +216,11 @@ export class ProgressPageComponent implements OnInit {
         error: (error) =>
           this.notificationService.fromHttpError(error, 'Progress details failed to load')
       });
+  }
+
+  private hydrateFromCache() {
+    this.logs = [...this.progressLogService.getItemsSnapshot()].sort(
+      (left, right) => new Date(right.date).getTime() - new Date(left.date).getTime()
+    );
   }
 }
