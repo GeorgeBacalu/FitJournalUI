@@ -180,9 +180,6 @@
     <div class="flex align-items-center justify-content-between gap-3 mb-3 flex-wrap">
       <div>
         <div class="font-semibold">Exercise catalog</div>
-        <small class="text-color-secondary">
-          Create standalone exercises and reuse them in any workout.
-        </small>
       </div>
       @if (canManageExercises) {
         <button
@@ -203,24 +200,63 @@
             <th>Name</th>
             <th>Muscle group</th>
             <th>Difficulty</th>
+            <th>Actions</th>
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-exercise>
-          <tr>
+          <tr [class.surface-100]="selectedCatalogExerciseId === exercise.id">
             <td>{{ exercise.name }}</td>
             <td>{{ muscleGroupLabel(exercise.muscleGroup) }}</td>
             <td>{{ difficultyLabel(exercise.difficultyLevel) }}</td>
+            <td>
+              <div class="table-actions">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-eye"
+                  label="Open"
+                  severity="secondary"
+                  size="small"
+                  (click)="openCatalogExercise(exercise.id)"
+                ></button>
+
+                @if (canManageExercises) {
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-pencil"
+                    label="Edit"
+                    severity="secondary"
+                    size="small"
+                    (click)="startEditCatalogExercise(exercise.id)"
+                  ></button>
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-trash"
+                    label="Delete"
+                    severity="danger"
+                    size="small"
+                    (click)="removeCatalogExercise(exercise)"
+                  ></button>
+                }
+              </div>
+            </td>
           </tr>
         </ng-template>
         <ng-template pTemplate="emptymessage">
           <tr>
-            <td colspan="3">
+            <td colspan="4">
               <p class="section-empty">Exercise catalog is empty.</p>
             </td>
           </tr>
         </ng-template>
       </p-table>
     </p-card>
+
+    @if (selectedCatalogExerciseId) {
+      <app-selected-exercise-details />
+    }
   </div>
 </div>
 
@@ -312,7 +348,7 @@
   [(visible)]="standaloneExerciseDialogVisible"
   [modal]="true"
   [style]="{ width: '36rem', maxWidth: '95vw' }"
-  header="New exercise"
+  [header]="editingCatalogExerciseId ? 'Edit exercise' : 'New exercise'"
 >
   <form
     [formGroup]="standaloneExerciseForm"
@@ -393,7 +429,7 @@
       <button
         pButton
         type="submit"
-        label="Create exercise"
+        [label]="editingCatalogExerciseId ? 'Save changes' : 'Create exercise'"
         icon="pi pi-check"
         [loading]="savingCatalogExercise"
       ></button>

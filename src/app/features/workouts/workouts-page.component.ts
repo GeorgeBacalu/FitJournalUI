@@ -32,6 +32,7 @@ import {
   ShortWorkoutExercise,
   Workout
 } from '../../core/models/api.models';
+import { SelectedExerciseDetailsComponent } from './selected-exercise-details.component';
 
 @Component({
   imports: [
@@ -46,7 +47,8 @@ import {
     SelectModule,
     TableModule,
     TagModule,
-    TextareaModule
+    TextareaModule,
+    SelectedExerciseDetailsComponent
   ],
   templateUrl: './workouts-page.component.html'
 })
@@ -54,7 +56,9 @@ export class WorkoutsPageComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   readonly difficultyOptions = DIFFICULTY_OPTIONS;
   readonly muscleGroupOptions = MUSCLE_GROUP_OPTIONS;
+  selectedCatalogExerciseId: string | null = null;
   exerciseCatalog: ShortExercise[] = [];
+  editingCatalogExerciseId: string | null = null;
   savingCatalogExercise = false;
   selectedWorkout: Workout | null = null;
   selectedWorkoutId: string | null = null;
@@ -169,6 +173,7 @@ export class WorkoutsPageComponent implements OnInit {
       return;
     }
 
+    this.editingCatalogExerciseId = null;
     this.standaloneExerciseSubmitted = false;
     this.standaloneExerciseDialogVisible = true;
     this.standaloneExerciseForm.reset({
@@ -193,7 +198,25 @@ export class WorkoutsPageComponent implements OnInit {
     });
   }
 
-  refresh(preferredWorkoutId = this.selectedWorkoutId) {
+  openCatalogExercise(exerciseId: string, showError = true) {
+    this.selectedCatalogExerciseId = exerciseId;
+
+    this.exerciseService.select(exerciseId).subscribe({
+      error: (error) => {
+        this.selectedCatalogExerciseId = null;
+        this.exerciseService.clearSelected();
+
+        if (showError) {
+          this.notificationService.fromHttpError(error, 'Exercise details failed to load');
+        }
+      }
+    });
+  }
+
+  refresh(
+    preferredWorkoutId = this.selectedWorkoutId,
+    preferredExerciseId = this.selectedCatalogExerciseId
+  ) {
     this.loading = true;
 
     forkJoin({
@@ -205,6 +228,19 @@ export class WorkoutsPageComponent implements OnInit {
         this.exerciseCatalog = [...result.exercises].sort((left, right) =>
           left.name.localeCompare(right.name)
         );
+
+        const nextExerciseId =
+          preferredExerciseId &&
+          this.exerciseCatalog.some((item) => item.id === preferredExerciseId)
+            ? preferredExerciseId
+            : null;
+
+        if (nextExerciseId) {
+          this.openCatalogExercise(nextExerciseId, false);
+        } else {
+          this.selectedCatalogExerciseId = null;
+          this.exerciseService.clearSelected();
+        }
 
         if (!this.workouts.length) {
           this.loading = false;
@@ -334,25 +370,40 @@ export class WorkoutsPageComponent implements OnInit {
       return;
     }
 
+    const editingCatalogExerciseId = this.editingCatalogExerciseId;
     this.savingCatalogExercise = true;
 
-    this.exerciseService
-      .create({
-        name: formValue.name,
-        description: formValue.description || null,
-        notes: formValue.notes || null,
-        muscleGroup: formValue.muscleGroup,
-        difficultyLevel: formValue.difficultyLevel
-      })
+    const request = {
+      name: formValue.name,
+      description: formValue.description || null,
+      notes: formValue.notes || null,
+      muscleGroup: formValue.muscleGroup,
+      difficultyLevel: formValue.difficultyLevel
+    };
+
+    const saveRequest$ = editingCatalogExerciseId
+      ? this.exerciseService.update({
+          id: editingCatalogExerciseId,
+          ...request
+        })
+      : this.exerciseService.create(request);
+
+    saveRequest$
       .pipe(finalize(() => (this.savingCatalogExercise = false)))
       .subscribe({
         next: (response) => {
-          this.notificationService.success('Exercise created', response.message);
+          this.notificationService.success(
+            editingCatalogExerciseId ? 'Exercise updated' : 'Exercise created',
+            response.message
+          );
           this.standaloneExerciseDialogVisible = false;
-          this.refresh(this.selectedWorkoutId);
+          this.refresh(
+            this.selectedWorkoutId,
+            editingCatalogExerciseId ?? this.selectedCatalogExerciseId
+          );
         },
         error: (error) =>
-          this.notificationService.fromHttpError(error, 'Exercise creation failed')
+          this.notificationService.fromHttpError(error, 'Exercise save failed')
       });
   }
 
@@ -399,6 +450,33 @@ export class WorkoutsPageComponent implements OnInit {
       });
   }
 
+  startEditCatalogExercise(exerciseId: string) {
+    if (!this.canManageExercises) {
+      this.notificationService.warn(
+        'Admin role required',
+        'Your backend only allows admin accounts to edit standalone exercises.'
+      );
+      return;
+    }
+
+    this.exerciseService.getById(exerciseId).subscribe({
+      next: (exercise) => {
+        this.editingCatalogExerciseId = exerciseId;
+        this.standaloneExerciseSubmitted = false;
+        this.standaloneExerciseDialogVisible = true;
+        this.standaloneExerciseForm.reset({
+          name: exercise.name,
+          description: exercise.description ?? '',
+          notes: exercise.notes ?? '',
+          muscleGroup: exercise.muscleGroup,
+          difficultyLevel: exercise.difficultyLevel
+        });
+      },
+      error: (error) =>
+        this.notificationService.fromHttpError(error, 'Exercise details failed to load')
+    });
+  }
+
   removeWorkout(workout: ShortWorkout) {
     this.confirmationService.confirm({
       header: 'Delete workout',
@@ -412,6 +490,40 @@ export class WorkoutsPageComponent implements OnInit {
           },
           error: (error) =>
             this.notificationService.fromHttpError(error, 'Workout delete failed')
+        });
+      }
+    });
+  }
+
+  removeCatalogExercise(exercise: ShortExercise) {
+    if (!this.canManageExercises) {
+      this.notificationService.warn(
+        'Admin role required',
+        'Your backend only allows admin accounts to delete standalone exercises.'
+      );
+      return;
+    }
+
+    this.confirmationService.confirm({
+      header: 'Delete exercise',
+      icon: 'pi pi-exclamation-triangle',
+      message: `Remove "${exercise.name}" from the exercise catalog?`,
+      accept: () => {
+        const preferredExerciseId =
+          exercise.id === this.selectedCatalogExerciseId ? null : this.selectedCatalogExerciseId;
+
+        if (exercise.id === this.selectedCatalogExerciseId) {
+          this.selectedCatalogExerciseId = null;
+          this.exerciseService.clearSelected();
+        }
+
+        this.exerciseService.remove([exercise.id]).subscribe({
+          next: (response) => {
+            this.notificationService.success('Exercise deleted', response.message);
+            this.refresh(this.selectedWorkoutId, preferredExerciseId);
+          },
+          error: (error) =>
+            this.notificationService.fromHttpError(error, 'Exercise delete failed')
         });
       }
     });
