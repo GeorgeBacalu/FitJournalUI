@@ -342,7 +342,11 @@ export class WorkoutsPageComponent implements OnInit {
       return;
     }
 
-    const editingWorkoutExerciseId = this.editingWorkoutExerciseId;
+    const editingWorkoutExerciseId =
+      this.editingWorkoutExerciseId ??
+      (this.editingWorkoutExercise
+        ? this.resolveWorkoutExerciseId(this.editingWorkoutExercise)
+        : null);
     const isEditingWorkoutExercise = this.isEditingWorkoutExercise;
 
     if (isEditingWorkoutExercise && !editingWorkoutExerciseId) {
@@ -450,7 +454,14 @@ export class WorkoutsPageComponent implements OnInit {
         next: (result) => {
           this.selectedWorkoutId = workoutId;
           this.selectedWorkout = result.detail;
-          this.workoutExercises = result.exercises;
+          const detailExerciseIds = new Map(
+            result.detail.workoutExercises.map((entry) => [entry.exerciseId, entry.id])
+          );
+
+          this.workoutExercises = result.exercises.map((entry) => ({
+            ...entry,
+            id: entry.id || detailExerciseIds.get(entry.exerciseId) || ''
+          }));
         },
         error: (error) =>
           this.notificationService.fromHttpError(error, 'Workout details failed to load')
@@ -482,8 +493,10 @@ export class WorkoutsPageComponent implements OnInit {
   }
 
   startEditWorkoutExercise(entry: ShortWorkoutExercise) {
+    const resolvedWorkoutExerciseId = this.resolveWorkoutExerciseId(entry);
+
     this.editingWorkoutExercise = entry;
-    this.editingWorkoutExerciseId = entry.id;
+    this.editingWorkoutExerciseId = resolvedWorkoutExerciseId;
     this.exerciseSubmitted = false;
     this.exerciseDialogVisible = true;
     this.workoutExerciseForm.reset({
@@ -505,7 +518,7 @@ export class WorkoutsPageComponent implements OnInit {
     if (!this.canManageExercises) {
       this.notificationService.warn(
         'Admin role required',
-        'Your backend only allows admin accounts to edit standalone exercises.'
+        'Only admins are allowed to edit standalone exercises.'
       );
       return;
     }
@@ -550,7 +563,7 @@ export class WorkoutsPageComponent implements OnInit {
     if (!this.canManageExercises) {
       this.notificationService.warn(
         'Admin role required',
-        'Your backend only allows admin accounts to delete standalone exercises.'
+        'Only admins are allowed to delete standalone exercises.'
       );
       return;
     }
@@ -608,6 +621,18 @@ export class WorkoutsPageComponent implements OnInit {
     return [...items].sort(
       (left, right) =>
         new Date(selector(right)).getTime() - new Date(selector(left)).getTime()
+    );
+  }
+
+  private resolveWorkoutExerciseId(entry: ShortWorkoutExercise) {
+    if (entry.id) {
+      return entry.id;
+    }
+
+    return (
+      this.selectedWorkout?.workoutExercises.find(
+        (workoutExercise) => workoutExercise.exerciseId === entry.exerciseId
+      )?.id ?? null
     );
   }
 }
