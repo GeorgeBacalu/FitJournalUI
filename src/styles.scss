@@ -159,13 +159,19 @@ a {
 }
 
 .dialog-grid {
-  margin-left: -0.25rem;
-  margin-right: -0.25rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  width: 100%;
 }
 
-.dialog-grid > [class*='col-'] {
-  padding-left: 0.25rem;
-  padding-right: 0.25rem;
+.dialog-grid-item {
+  min-width: 0;
+}
+
+.dialog-grid .p-inputnumber,
+.dialog-grid .p-inputnumber-input {
+  width: 100%;
 }
 
 .w-full {
@@ -176,5 +182,9 @@ a {
   .app-shell,
   .page-shell {
     width: min(100vw - 1rem, 1200px);
+  }
+
+  .dialog-grid {
+    grid-template-columns: 1fr;
   }
 }
