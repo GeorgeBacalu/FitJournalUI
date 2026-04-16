@@ -47,6 +47,11 @@ a {
   color: var(--text-color-secondary);
 }
 
+.page-shell .page-title,
+.page-shell .page-subtitle {
+  color: #18181b;
+}
+
 .logo-mark {
   width: 3rem;
   height: 3rem;
@@ -156,6 +161,14 @@ a {
 
 .exercise-editor-dialog .p-dialog-content {
   overflow-x: hidden;
+}
+
+.p-toast .p-toast-message-success .p-toast-detail {
+  color: #15803d;
+}
+
+.p-toast .p-toast-message-error .p-toast-detail {
+  color: #b91c1c;
 }
 
 .dialog-grid {
