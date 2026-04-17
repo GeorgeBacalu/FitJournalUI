@@ -1,9 +1,17 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map, switchMap, tap } from 'rxjs/operators';
 import { API_BASE_URL, DEFAULT_PAGE_REQUEST } from '../constants/app.constants';
-import { FoodItem, FoodItemsResponse, ShortFoodItem } from '../models/api.models';
+import {
+  AddFoodItemRequest,
+  EditFoodItemRequest,
+  FoodItem,
+  FoodItemsResponse,
+  MessageResponse,
+  RemoveRangeRequest,
+  ShortFoodItem
+} from '../models/api.models';
 import { BaseResourceService } from './base-resource.service';
 
 @Injectable({
@@ -34,6 +42,35 @@ export class FoodItemService extends BaseResourceService {
 
   getById(id: string) {
     return this.httpClient.get<FoodItem>(`${this.endpoint}/${id}`);
+  }
+
+  create(request: AddFoodItemRequest) {
+    return this.withLoading(
+      this.httpClient.post<MessageResponse>(this.endpoint, request).pipe(
+        switchMap((response) => this.load().pipe(map(() => response)))
+      )
+    );
+  }
+
+  update(request: EditFoodItemRequest) {
+    return this.withLoading(
+      this.httpClient.put<MessageResponse>(this.endpoint, request).pipe(
+        switchMap((response) => this.load().pipe(map(() => response)))
+      )
+    );
+  }
+
+  remove(ids: string[]) {
+    return this.withLoading(
+      this.httpClient
+        .request<MessageResponse>('delete', this.endpoint, {
+          body: {
+            ids,
+            hardDelete: false
+          } as RemoveRangeRequest
+        })
+        .pipe(switchMap((response) => this.load().pipe(map(() => response))))
+    );
   }
 
   findById(id: string) {

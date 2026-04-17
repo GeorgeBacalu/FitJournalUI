@@ -118,6 +118,20 @@ export interface FoodItemsResponse {
   totalCount: number;
 }
 
+export interface AddFoodItemRequest {
+  name: string;
+  category: number;
+  brand: number;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+export interface EditFoodItemRequest extends AddFoodItemRequest {
+  id: string;
+}
+
 export interface WorkoutExerciseEntry {
   id: string;
   exerciseId: string;

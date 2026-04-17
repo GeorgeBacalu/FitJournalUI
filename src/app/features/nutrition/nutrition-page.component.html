@@ -1,7 +1,7 @@
 <div class="flex align-items-start justify-content-between gap-3 mb-4 flex-wrap">
   <div>
     <h2 class="page-title">Nutrition</h2>
-    <p class="page-subtitle">Log what you eat and review the catalog available from the API.</p>
+    <p class="page-subtitle">Log what you eat and review the catalog available food items.</p>
   </div>
 
   <div class="toolbar-actions">
@@ -46,7 +46,7 @@
 </div>
 
 <div class="grid mt-1">
-  <div class="col-12 xl:col-7">
+  <div class="col-12">
     <p-card header="Food logs">
       <p-table [value]="foodLogs" responsiveLayout="scroll">
         <ng-template pTemplate="header">
@@ -99,7 +99,23 @@
     </p-card>
   </div>
 
-  <div class="col-12 xl:col-5">
+  <div class="col-12">
+    <div class="flex align-items-center justify-content-between gap-3 mb-3 flex-wrap">
+      <div>
+        <div class="font-semibold">Food catalog</div>
+      </div>
+      @if (canManageFoodItems) {
+        <button
+          pButton
+          type="button"
+          label="New food item"
+          icon="pi pi-plus"
+          severity="secondary"
+          (click)="openNewFoodItemDialog()"
+        ></button>
+      }
+    </div>
+
     <p-card header="Food catalog">
       <p-table [value]="foodItems" responsiveLayout="scroll">
         <ng-template pTemplate="header">
@@ -116,15 +132,38 @@
             <td>{{ categoryLabel(foodItem.category) }}</td>
             <td>{{ brandLabel(foodItem.brand) }}</td>
             <td>
-              <button
-                pButton
-                type="button"
-                label="View"
-                icon="pi pi-eye"
-                severity="secondary"
-                size="small"
-                (click)="openFoodDetails(foodItem.id)"
-              ></button>
+              <div class="table-actions">
+                <button
+                  pButton
+                  type="button"
+                  label="Open"
+                  icon="pi pi-eye"
+                  severity="secondary"
+                  size="small"
+                  (click)="openFoodDetails(foodItem.id)"
+                ></button>
+
+                @if (canManageFoodItems) {
+                  <button
+                    pButton
+                    type="button"
+                    label="Edit"
+                    icon="pi pi-pencil"
+                    severity="secondary"
+                    size="small"
+                    (click)="startEditFoodItem(foodItem.id)"
+                  ></button>
+                  <button
+                    pButton
+                    type="button"
+                    label="Delete"
+                    icon="pi pi-trash"
+                    severity="danger"
+                    size="small"
+                    (click)="removeFoodItem(foodItem)"
+                  ></button>
+                }
+              </div>
             </td>
           </tr>
         </ng-template>
@@ -218,6 +257,127 @@
         [label]="editingFoodLogId ? 'Save changes' : 'Save food log'"
         icon="pi pi-check"
         [loading]="saving"
+      ></button>
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog
+  [(visible)]="foodItemEditorDialogVisible"
+  [modal]="true"
+  [style]="{ width: '38rem', maxWidth: '95vw' }"
+  [header]="editingFoodItemId ? 'Edit food item' : 'New food item'"
+>
+  <form [formGroup]="foodItemForm" (ngSubmit)="saveFoodItem()" class="form-grid">
+    <div class="field">
+      <label class="field-label" for="foodItemName">Name</label>
+      <input id="foodItemName" pInputText formControlName="name" class="w-full" />
+    </div>
+
+    <div class="grid">
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label class="field-label" for="foodCategory">Category</label>
+          <p-select
+            inputId="foodCategory"
+            formControlName="category"
+            [options]="foodCategoryOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select category"
+            class="w-full"
+          />
+        </div>
+      </div>
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label class="field-label" for="foodBrand">Brand</label>
+          <p-select
+            inputId="foodBrand"
+            formControlName="brand"
+            [options]="foodBrandOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select brand"
+            class="w-full"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label class="field-label" for="foodCalories">Calories</label>
+          <p-inputnumber
+            inputId="foodCalories"
+            formControlName="calories"
+            [min]="0"
+            [max]="5000"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="0"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label class="field-label" for="foodProtein">Protein (g)</label>
+          <p-inputnumber
+            inputId="foodProtein"
+            formControlName="protein"
+            [min]="0"
+            [max]="500"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="1"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label class="field-label" for="foodCarbs">Carbs (g)</label>
+          <p-inputnumber
+            inputId="foodCarbs"
+            formControlName="carbs"
+            [min]="0"
+            [max]="500"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="1"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label class="field-label" for="foodFat">Fat (g)</label>
+          <p-inputnumber
+            inputId="foodFat"
+            formControlName="fat"
+            [min]="0"
+            [max]="500"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="1"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="toolbar-actions justify-content-end mt-2">
+      <button
+        pButton
+        type="button"
+        label="Cancel"
+        severity="secondary"
+        (click)="foodItemEditorDialogVisible = false"
+      ></button>
+      <button
+        pButton
+        type="submit"
+        [label]="editingFoodItemId ? 'Save changes' : 'Create food item'"
+        icon="pi pi-check"
+        [loading]="savingFoodItem"
       ></button>
     </div>
   </form>
