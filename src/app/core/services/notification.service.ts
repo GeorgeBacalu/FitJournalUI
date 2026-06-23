@@ -4,7 +4,7 @@ import { MessageService } from 'primeng/api';
 import { ApiErrorResponse } from '../models/api.models';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class NotificationService {
   constructor(private readonly messageService: MessageService) {}

@@ -119,8 +119,14 @@ a {
 
 .table-actions {
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  gap: 0.25rem;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.table-actions .p-button {
+  flex: 0 0 auto;
+  padding-inline: 0.55rem;
 }
 
 .workout-exercises-table .p-datatable-thead > tr > th,

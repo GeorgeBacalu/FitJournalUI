@@ -25,7 +25,7 @@
 </div>
 
 <div class="grid">
-  <div class="col-12 xl:col-7">
+  <div class="col-12 xl:col-6">
     <p-card header="Workout list">
       <p-table [value]="workouts" dataKey="id" responsiveLayout="scroll">
         <ng-template pTemplate="header">
@@ -87,7 +87,7 @@
     </p-card>
   </div>
 
-  <div class="col-12 xl:col-5">
+  <div class="col-12 xl:col-6">
     <p-card header="Selected workout">
       @if (selectedWorkout) {
         <div class="flex flex-column gap-3">
