@@ -170,11 +170,11 @@ a {
 }
 
 .p-toast .p-toast-message-success .p-toast-detail {
-  color: #15803d;
+  color: var(--p-green-500);
 }
 
 .p-toast .p-toast-message-error .p-toast-detail {
-  color: #b91c1c;
+  color: var(--p-red-500);
 }
 
 .dialog-grid {
