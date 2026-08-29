@@ -65,6 +65,10 @@ export const routes: Routes = [
           import('./features/profile/profile-page.component').then((m) => m.ProfilePageComponent)
       },
       {
+        path: 'athlete-advice',
+        loadComponent: () => import('./features/advice/athlete-advice-page.component').then((m) => m.AthleteAdvicePageComponent)
+      },
+      {
         path: '',
         pathMatch: 'full',
         redirectTo: 'dashboard'
