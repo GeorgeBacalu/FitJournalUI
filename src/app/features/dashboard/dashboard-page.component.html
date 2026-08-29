@@ -76,6 +76,12 @@
   </div>
 
   <div class="grid mt-1">
+    <div class="col-12 flex justify-content-end gap-2 align-items-center flex-wrap">
+      <span class="text-color-secondary text-sm">Analytics period</span>
+      @for (period of [{label: '30 days', value: 30}, {label: '90 days', value: 90}, {label: 'All', value: 0}]; track period.value) {
+        <button pButton type="button" size="small" [label]="period.label" [outlined]="analyticsDays !== period.value" severity="secondary" (click)="setAnalyticsDays(period.value)"></button>
+      }
+    </div>
     <div class="col-12 lg:col-4">
       <p-card header="Recent workouts" class="h-full">
         @if (workouts.length) {
@@ -164,6 +170,22 @@
         } @else {
           <p class="section-empty">Add at least two progress entries to see your trend.</p>
         }
+      </p-card>
+    </div>
+
+    <div class="col-12 lg:col-6">
+      <p-card header="Workout duration" class="h-full">
+        @if (workouts.length) {
+          <div class="dashboard-chart" role="img" aria-label="Workout duration by day"><canvas #workoutChart></canvas></div>
+        } @else { <p class="section-empty">Log a workout to see training duration.</p> }
+      </p-card>
+    </div>
+
+    <div class="col-12 lg:col-6">
+      <p-card header="Nutrition logging consistency" class="h-full">
+        @if (foodLogs.length) {
+          <div class="dashboard-chart" role="img" aria-label="Nutrition entries by day"><canvas #nutritionChart></canvas></div>
+        } @else { <p class="section-empty">Log nutrition to see consistency.</p> }
       </p-card>
     </div>
 
