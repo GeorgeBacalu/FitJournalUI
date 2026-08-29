@@ -144,6 +144,30 @@
     </div>
 
     <div class="col-12 lg:col-6">
+      <p-card header="Weight trend" class="h-full">
+        @if (progressLogs.length > 1) {
+          <div class="dashboard-chart" role="img" aria-label="Weight trend over progress entries">
+            <canvas #weightChart></canvas>
+          </div>
+        } @else {
+          <p class="section-empty">Add at least two progress entries to see your trend.</p>
+        }
+      </p-card>
+    </div>
+
+    <div class="col-12 lg:col-6">
+      <p-card header="Body-fat trend" class="h-full">
+        @if (progressLogs.length > 1) {
+          <div class="dashboard-chart" role="img" aria-label="Body-fat trend over progress entries">
+            <canvas #bodyFatChart></canvas>
+          </div>
+        } @else {
+          <p class="section-empty">Add at least two progress entries to see your trend.</p>
+        }
+      </p-card>
+    </div>
+
+    <div class="col-12 lg:col-6">
       <p-card header="Latest progress" class="h-full">
         @if (latestProgressLog) {
           <div class="grid">

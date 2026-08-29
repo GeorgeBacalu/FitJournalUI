@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Chart, registerables } from 'chart.js';
 import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { ButtonModule } from 'primeng/button';
@@ -25,11 +26,18 @@ import { ProgressLogService } from '../../core/services/progress-log.service';
 import { UserService } from '../../core/services/user.service';
 import { WorkoutService } from '../../core/services/workout.service';
 
+Chart.register(...registerables);
+
 @Component({
   imports: [CommonModule, CardModule, ButtonModule, TagModule],
   templateUrl: './dashboard-page.component.html'
 })
-export class DashboardPageComponent implements OnInit {
+
+export class DashboardPageComponent implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild('weightChart') private weightChartCanvas?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('bodyFatChart') private bodyFatChartCanvas?: ElementRef<HTMLCanvasElement>;
+  private weightChart?: Chart;
+  private bodyFatChart?: Chart;
   exercises: ShortExercise[] = [];
   foodItems: ShortFoodItem[] = [];
   foodLogs: ShortFoodLog[] = [];
@@ -54,6 +62,15 @@ export class DashboardPageComponent implements OnInit {
   ngOnInit() {
     this.hydrateFromCache();
     this.refresh();
+  }
+
+  ngAfterViewInit() {
+    this.renderCharts();
+  }
+
+  ngOnDestroy() {
+    this.weightChart?.destroy();
+    this.bodyFatChart?.destroy();
   }
 
   get activeGoalsCount() {
@@ -101,10 +118,34 @@ export class DashboardPageComponent implements OnInit {
           this.foodItems = [...result.foodItems].sort((left, right) =>
             left.name.localeCompare(right.name)
           );
+          this.renderCharts();
         },
         error: (error) =>
           this.notificationService.fromHttpError(error, 'Dashboard load failed')
       });
+  }
+
+  private renderCharts() {
+    if (!this.weightChartCanvas || !this.bodyFatChartCanvas || this.progressLogs.length < 2) return;
+
+    const entries = [...this.progressLogs].reverse();
+    const labels = entries.map((entry) => entry.date);
+    const options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index' as const, intersect: false },
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: false, grid: { color: 'rgba(148, 163, 184, 0.18)' } } }
+    };
+
+    this.weightChart?.destroy();
+    this.bodyFatChart?.destroy();
+    this.weightChart = new Chart(this.weightChartCanvas.nativeElement, {
+      type: 'line', data: { labels, datasets: [{ label: 'Weight (kg)', data: entries.map((e) => e.weight), borderColor: '#16a34a', backgroundColor: 'rgba(22, 163, 74, 0.14)', fill: true, tension: 0.3 }] }, options
+    });
+    this.bodyFatChart = new Chart(this.bodyFatChartCanvas.nativeElement, {
+      type: 'line', data: { labels, datasets: [{ label: 'Body fat (%)', data: entries.map((e) => e.bodyFat), borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.14)', fill: true, tension: 0.3 }] }, options
+    });
   }
 
   foodCategoryLabel(item: FoodItem | ShortFoodItem | null | undefined) {
