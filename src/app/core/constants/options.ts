@@ -74,5 +74,6 @@ export const NAVIGATION_ITEMS = [
   { label: 'Goals', route: '/goals', icon: 'pi pi-flag' },
   { label: 'Progress', route: '/progress', icon: 'pi pi-chart-line' },
   { label: 'Nutrition', route: '/nutrition', icon: 'pi pi-apple' },
+  { label: 'Athlete advice', route: '/athlete-advice', icon: 'pi pi-comments' },
   { label: 'Profile', route: '/profile', icon: 'pi pi-user' }
 ];
