@@ -96,6 +96,15 @@ export class ExerciseService extends BaseResourceService {
     );
   }
 
+  uploadMedia(exerciseId: string, mediaType: 'thumbnail' | 'video', file: File) {
+    const form = new FormData();
+    form.append('file', file);
+    return this.httpClient.post<{ url: string; thumbnailUrl?: string; videoUrl?: string }>(
+      `${this.endpoint}/${exerciseId}/media/${mediaType}`,
+      form
+    ).pipe(switchMap((response) => this.select(exerciseId).pipe(map(() => response))));
+  }
+
   remove(ids: string[]) {
     return this.withLoading(
       this.httpClient

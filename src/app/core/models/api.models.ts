@@ -75,11 +75,13 @@ export interface ShortExercise {
   name: string;
   muscleGroup: number;
   difficultyLevel: number;
+  thumbnailUrl?: string | null;
 }
 
 export interface Exercise extends ShortExercise {
   description?: string | null;
   notes?: string | null;
+  videoUrl?: string | null;
 }
 
 export interface ExercisesResponse {
