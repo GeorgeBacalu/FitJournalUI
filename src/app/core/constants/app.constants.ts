@@ -16,4 +16,5 @@ export const AUTH_SKIP_ENDPOINTS = [
   '/auth/forgot-password',
   '/auth/reset-password',
   '/auth/refresh'
+  ,'/auth/external'
 ];
