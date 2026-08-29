@@ -25,6 +25,7 @@ import { NotificationService } from '../../core/services/notification.service';
 import { ProgressLogService } from '../../core/services/progress-log.service';
 import { UserService } from '../../core/services/user.service';
 import { WorkoutService } from '../../core/services/workout.service';
+import { countByDay, withinDays } from './dashboard-analytics.utils';
 
 Chart.register(...registerables);
 
@@ -36,8 +37,13 @@ Chart.register(...registerables);
 export class DashboardPageComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('weightChart') private weightChartCanvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild('bodyFatChart') private bodyFatChartCanvas?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('workoutChart') private workoutChartCanvas?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('nutritionChart') private nutritionChartCanvas?: ElementRef<HTMLCanvasElement>;
   private weightChart?: Chart;
   private bodyFatChart?: Chart;
+  private workoutChart?: Chart;
+  private nutritionChart?: Chart;
+  analyticsDays = 90;
   exercises: ShortExercise[] = [];
   foodItems: ShortFoodItem[] = [];
   foodLogs: ShortFoodLog[] = [];
@@ -71,6 +77,8 @@ export class DashboardPageComponent implements OnInit, AfterViewInit, OnDestroy 
   ngOnDestroy() {
     this.weightChart?.destroy();
     this.bodyFatChart?.destroy();
+    this.workoutChart?.destroy();
+    this.nutritionChart?.destroy();
   }
 
   get activeGoalsCount() {
@@ -118,7 +126,7 @@ export class DashboardPageComponent implements OnInit, AfterViewInit, OnDestroy 
           this.foodItems = [...result.foodItems].sort((left, right) =>
             left.name.localeCompare(right.name)
           );
-          this.renderCharts();
+          this.scheduleCharts();
         },
         error: (error) =>
           this.notificationService.fromHttpError(error, 'Dashboard load failed')
@@ -126,9 +134,9 @@ export class DashboardPageComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   private renderCharts() {
-    if (!this.weightChartCanvas || !this.bodyFatChartCanvas || this.progressLogs.length < 2) return;
-
-    const entries = [...this.progressLogs].reverse();
+    const entries = withinDays([...this.progressLogs].reverse(), (entry) => entry.date, this.analyticsDays);
+    const workouts = withinDays([...this.workouts].reverse(), (entry) => entry.startedAt, this.analyticsDays);
+    const nutrition = withinDays([...this.foodLogs].reverse(), (entry) => entry.date, this.analyticsDays);
     const labels = entries.map((entry) => entry.date);
     const options = {
       responsive: true,
@@ -138,15 +146,21 @@ export class DashboardPageComponent implements OnInit, AfterViewInit, OnDestroy 
       scales: { y: { beginAtZero: false, grid: { color: 'rgba(148, 163, 184, 0.18)' } } }
     };
 
-    this.weightChart?.destroy();
-    this.bodyFatChart?.destroy();
-    this.weightChart = new Chart(this.weightChartCanvas.nativeElement, {
+    this.weightChart?.destroy(); this.bodyFatChart?.destroy(); this.workoutChart?.destroy(); this.nutritionChart?.destroy();
+    if (this.weightChartCanvas && entries.length > 1) this.weightChart = new Chart(this.weightChartCanvas.nativeElement, {
       type: 'line', data: { labels, datasets: [{ label: 'Weight (kg)', data: entries.map((e) => e.weight), borderColor: '#16a34a', backgroundColor: 'rgba(22, 163, 74, 0.14)', fill: true, tension: 0.3 }] }, options
     });
-    this.bodyFatChart = new Chart(this.bodyFatChartCanvas.nativeElement, {
+    if (this.bodyFatChartCanvas && entries.length > 1) this.bodyFatChart = new Chart(this.bodyFatChartCanvas.nativeElement, {
       type: 'line', data: { labels, datasets: [{ label: 'Body fat (%)', data: entries.map((e) => e.bodyFat), borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.14)', fill: true, tension: 0.3 }] }, options
     });
+    if (this.workoutChartCanvas && workouts.length) this.workoutChart = new Chart(this.workoutChartCanvas.nativeElement, { type: 'bar', data: { labels: workouts.map((x) => x.startedAt.slice(0, 10)), datasets: [{ label: 'Duration (min)', data: workouts.map((x) => x.durationMinutes), backgroundColor: '#7c3aed' }] }, options: { ...options, scales: { y: { beginAtZero: true } } } });
+    const nutritionDays = countByDay(nutrition, (x) => x.date);
+    if (this.nutritionChartCanvas && nutrition.length) this.nutritionChart = new Chart(this.nutritionChartCanvas.nativeElement, { type: 'bar', data: { labels: nutritionDays.labels, datasets: [{ label: 'Nutrition entries', data: nutritionDays.values, backgroundColor: '#ea580c' }] }, options: { ...options, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } } });
   }
+
+  setAnalyticsDays(days: number) { this.analyticsDays = days; this.scheduleCharts(); }
+
+  private scheduleCharts() { setTimeout(() => this.renderCharts()); }
 
   foodCategoryLabel(item: FoodItem | ShortFoodItem | null | undefined) {
     return FOOD_CATEGORY_LABELS[item?.category ?? 0] ?? 'Unknown';
