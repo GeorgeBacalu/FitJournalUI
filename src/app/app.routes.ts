@@ -3,6 +3,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 
 export const routes: Routes = [
+  { path: 'oauth-callback', loadComponent: () => import('./features/auth/oauth-callback-page.component').then((m) => m.OAuthCallbackPageComponent) },
   {
     path: 'login',
     canActivate: [guestGuard],
