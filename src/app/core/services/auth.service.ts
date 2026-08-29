@@ -38,6 +38,18 @@ export class AuthService {
     );
   }
 
+  exchangeExternalCode(code: string) {
+    return this.httpClient.post<AuthTokens>(`${this.endpoint}/external/exchange`, { code }).pipe(
+      tap((tokens) => this.sessionService.setTokens(tokens)),
+      switchMap(() => this.userService.loadCurrentUser()),
+      map(() => void 0)
+    );
+  }
+
+  externalLoginUrl(provider: 'google' | 'microsoft') {
+    return `${this.endpoint}/external/${provider}`;
+  }
+
   register(request: RegisterRequest) {
     return this.httpClient.post<MessageResponse>(`${this.endpoint}/register`, request);
   }

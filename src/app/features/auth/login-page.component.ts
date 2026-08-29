@@ -65,6 +65,6 @@ export class LoginPageComponent {
   }
 
   loginWith(provider: 'google' | 'microsoft') {
-    window.location.assign(`https://localhost:5000/api/v1/auth/external/${provider}`);
+    window.location.assign(this.authService.externalLoginUrl(provider));
   }
 }
