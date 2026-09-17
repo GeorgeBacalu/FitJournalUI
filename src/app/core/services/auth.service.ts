@@ -11,13 +11,13 @@ import {
   LoginRequest,
   MessageResponse,
   RegisterRequest,
-  ResetPasswordRequest
+  ResetPasswordRequest,
 } from '../models/api.models';
 import { SessionService } from './session.service';
 import { UserService } from './user.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   private readonly endpoint = `${API_BASE_URL}/auth`;
@@ -27,14 +27,14 @@ export class AuthService {
     private readonly httpClient: HttpClient,
     private readonly router: Router,
     private readonly sessionService: SessionService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
   ) {}
 
   login(request: LoginRequest) {
     return this.httpClient.post<AuthTokens>(`${this.endpoint}/login`, request).pipe(
       tap((tokens) => this.sessionService.setTokens(tokens)),
       switchMap(() => this.userService.loadCurrentUser()),
-      map(() => void 0)
+      map(() => void 0),
     );
   }
 
@@ -42,7 +42,7 @@ export class AuthService {
     return this.httpClient.post<AuthTokens>(`${this.endpoint}/external/exchange`, { code }).pipe(
       tap((tokens) => this.sessionService.setTokens(tokens)),
       switchMap(() => this.userService.loadCurrentUser()),
-      map(() => void 0)
+      map(() => void 0),
     );
   }
 
@@ -81,7 +81,7 @@ export class AuthService {
           shareReplay(1),
           finalize(() => {
             this.refreshRequest$ = null;
-          })
+          }),
         );
     }
 
@@ -89,9 +89,13 @@ export class AuthService {
   }
 
   deactivateAccount() {
-    return this.httpClient.delete<MessageResponse>(this.endpoint).pipe(
-      tap(() => this.logout(false))
-    );
+    return this.httpClient
+      .delete<MessageResponse>(this.endpoint)
+      .pipe(tap(() => this.logout(false)));
+  }
+
+  isAdmin() {
+    return this.sessionService.getCurrentRole() === 'Admin';
   }
 
   logout(redirect = true) {

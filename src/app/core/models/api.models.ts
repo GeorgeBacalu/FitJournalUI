@@ -58,6 +58,23 @@ export interface User {
   height: number;
   weight: number;
   gender: number;
+  role: number | string;
+}
+
+export interface UserSummary {
+  id: string;
+  name: string;
+  email: string;
+  birthday: string;
+  height: number;
+  weight: number;
+  gender: number;
+  role: number | string;
+}
+
+export interface UsersResponse {
+  users: UserSummary[];
+  totalCount: number;
 }
 
 export interface EditUserRequest {

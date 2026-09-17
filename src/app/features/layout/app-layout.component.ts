@@ -11,21 +11,24 @@ import { UserService } from '../../core/services/user.service';
 
 @Component({
   imports: [CommonModule, RouterOutlet, CardModule, ButtonModule, ScrollTopModule, TagModule],
-  templateUrl: './app-layout.component.html'
+  templateUrl: './app-layout.component.html',
 })
 export class AppLayoutComponent implements OnInit {
   private readonly userService = inject(UserService);
-  readonly navigationItems = NAVIGATION_ITEMS;
   readonly user$ = this.userService.currentUser$;
+
+  get navigationItems() {
+    return NAVIGATION_ITEMS.filter((item) => !item.adminOnly || this.authService.isAdmin());
+  }
 
   constructor(
     private readonly authService: AuthService,
-    private readonly router: Router
+    private readonly router: Router,
   ) {}
 
   ngOnInit() {
     this.userService.loadCurrentUser().subscribe({
-      error: () => undefined
+      error: () => undefined,
     });
   }
 
@@ -38,12 +41,14 @@ export class AppLayoutComponent implements OnInit {
   }
 
   initials(name: string | null | undefined) {
-    return (name ?? '')
-      .split(' ')
-      .filter((chunk) => !!chunk)
-      .slice(0, 2)
-      .map((chunk) => chunk[0]?.toUpperCase() ?? '')
-      .join('') || 'FJ';
+    return (
+      (name ?? '')
+        .split(' ')
+        .filter((chunk) => !!chunk)
+        .slice(0, 2)
+        .map((chunk) => chunk[0]?.toUpperCase() ?? '')
+        .join('') || 'FJ'
+    );
   }
 
   logout() {

@@ -11,7 +11,7 @@ const toLabelMap = (options: OptionItem[]) =>
 
 export const GENDER_OPTIONS: OptionItem[] = [
   { label: 'Male', value: 1 },
-  { label: 'Female', value: 2 }
+  { label: 'Female', value: 2 },
 ];
 
 export const GOAL_TYPE_OPTIONS: OptionItem[] = [
@@ -20,7 +20,7 @@ export const GOAL_TYPE_OPTIONS: OptionItem[] = [
   { label: 'Strength gain', value: 3 },
   { label: 'Weight gain', value: 4 },
   { label: 'Weight loss', value: 5 },
-  { label: 'Stretching', value: 6 }
+  { label: 'Stretching', value: 6 },
 ];
 
 export const MUSCLE_GROUP_OPTIONS: OptionItem[] = [
@@ -29,13 +29,13 @@ export const MUSCLE_GROUP_OPTIONS: OptionItem[] = [
   { label: 'Back', value: 3 },
   { label: 'Chest', value: 4 },
   { label: 'Legs', value: 5 },
-  { label: 'Shoulders', value: 6 }
+  { label: 'Shoulders', value: 6 },
 ];
 
 export const DIFFICULTY_OPTIONS: OptionItem[] = [
   { label: 'Beginner', value: 1 },
   { label: 'Intermediate', value: 2 },
-  { label: 'Advanced', value: 3 }
+  { label: 'Advanced', value: 3 },
 ];
 
 export const FOOD_CATEGORY_OPTIONS: OptionItem[] = [
@@ -48,7 +48,7 @@ export const FOOD_CATEGORY_OPTIONS: OptionItem[] = [
   { label: 'Grain', value: 7 },
   { label: 'Snack', value: 8 },
   { label: 'Beverage', value: 9 },
-  { label: 'Supplement', value: 10 }
+  { label: 'Supplement', value: 10 },
 ];
 
 export const FOOD_BRAND_OPTIONS: OptionItem[] = [
@@ -58,7 +58,7 @@ export const FOOD_BRAND_OPTIONS: OptionItem[] = [
   { label: 'BestNutrition', value: 4 },
   { label: 'Bulk', value: 5 },
   { label: 'Lidl', value: 6 },
-  { label: 'Kaufland', value: 7 }
+  { label: 'Kaufland', value: 7 },
 ];
 
 export const GENDER_LABELS = toLabelMap(GENDER_OPTIONS);
@@ -75,5 +75,6 @@ export const NAVIGATION_ITEMS = [
   { label: 'Progress', route: '/progress', icon: 'pi pi-chart-line' },
   { label: 'Nutrition', route: '/nutrition', icon: 'pi pi-apple' },
   { label: 'Athlete advice', route: '/athlete-advice', icon: 'pi pi-comments' },
-  { label: 'Profile', route: '/profile', icon: 'pi pi-user' }
+  { label: 'Profile', route: '/profile', icon: 'pi pi-user' },
+  { label: 'Administration', route: '/admin/users', icon: 'pi pi-shield', adminOnly: true },
 ];
