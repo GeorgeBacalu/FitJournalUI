@@ -15,6 +15,7 @@ Create an `azure-dev` environment for OIDC protection. Add these non-secret repo
 | `SERVICE_WEB_NAME`      | Frontend App Service name output |
 | `API_URL`               | API URL output                   |
 | `WEB_URL`               | Frontend URL output              |
+| `AZURE_DEPLOY_ENABLED`  | Set to `true` after provisioning |
 
 The infrastructure federated credential uses audience `api://AzureADTokenExchange` and this subject:
 
@@ -23,3 +24,5 @@ repo:GeorgeBacalu/fit-journal-frontend:environment:azure-dev
 ```
 
 No Azure client secret is required. Protect `dev` and configure environment reviewers if deployment approval is desired. The workflow generates the production API endpoint inside its isolated runner; no provider credential or Azure secret is compiled into the SPA.
+
+Until provisioning has completed, leave `AZURE_DEPLOY_ENABLED` unset or `false`. Quality and packaging still run, but the deployment job is skipped instead of failing against missing infrastructure.
