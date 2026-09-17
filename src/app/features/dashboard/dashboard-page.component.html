@@ -190,6 +190,26 @@
     </div>
 
     <div class="col-12 lg:col-6">
+      <p-card header="Body measurements" class="h-full">
+        @if (progressLogs.length > 1) {
+          <div class="dashboard-chart" role="img" aria-label="Waist, chest and arm measurement trends">
+            <canvas #measurementChart></canvas>
+          </div>
+        } @else { <p class="section-empty">Add at least two progress entries to compare measurements.</p> }
+      </p-card>
+    </div>
+
+    <div class="col-12 lg:col-6">
+      <p-card header="Goal progress" class="h-full">
+        @if (goals.length) {
+          <div class="dashboard-chart" role="img" aria-label="Active and achieved goals">
+            <canvas #goalChart></canvas>
+          </div>
+        } @else { <p class="section-empty">Create a goal to see completion progress.</p> }
+      </p-card>
+    </div>
+
+    <div class="col-12 lg:col-6">
       <p-card header="Latest progress" class="h-full">
         @if (latestProgressLog) {
           <div class="grid">
