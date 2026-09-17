@@ -1,0 +1,141 @@
+name: Frontend CI/CD
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Audit, test, and build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Run unit tests with coverage
+        run: npm run test:ci
+
+      - name: Retain coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-coverage
+          path: coverage/
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Verify production build
+        run: npm run build:production
+
+  package:
+    name: Package deployable SPA
+    if: github.event_name != 'pull_request'
+    needs: quality
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Build against the provisioned API
+        env:
+          API_URL: ${{ vars.API_URL }}
+        run: |
+          npm run configure:production
+          npm run build:production
+
+      - name: Create deployment archive
+        run: |
+          cd dist/fit-journal-frontend/browser
+          zip -q -r "${{ github.workspace }}/fitjournal-frontend.zip" .
+
+      - name: Retain deployment package
+        uses: actions/upload-artifact@v7
+        with:
+          name: fitjournal-frontend-package
+          path: fitjournal-frontend.zip
+          retention-days: 7
+          compression-level: 0
+          if-no-files-found: error
+
+  deploy:
+    name: Deploy SPA to Azure
+    if: github.ref == 'refs/heads/dev' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: package
+    runs-on: ubuntu-24.04
+    environment:
+      name: azure-dev
+      url: ${{ vars.WEB_URL }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          name: fitjournal-frontend-package
+          path: artifacts
+
+      - name: Sign in to Azure with OIDC
+        uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy tested SPA package
+        run: >-
+          az webapp deploy
+          --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}"
+          --name "${{ vars.SERVICE_WEB_NAME }}"
+          --src-path artifacts/fitjournal-frontend.zip
+          --type zip
+          --clean true
+          --restart true
+          --async false
+          --output none
+
+      - name: Require site availability
+        env:
+          SITE_URL: ${{ vars.WEB_URL }}
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error --max-time 10 "$SITE_URL" > /dev/null; then
+              echo "Frontend smoke check passed at $SITE_URL"
+              exit 0
+            fi
+            echo "Availability attempt ${attempt}/30 failed; retrying in 10 seconds."
+            sleep 10
+          done
+          az webapp log deployment show --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" --name "${{ vars.SERVICE_WEB_NAME }}" --output table || true
+          echo "Frontend smoke check failed at $SITE_URL" >&2
+          exit 1
+
+      - name: Sign out of Azure
+        if: always()
+        run: az logout
