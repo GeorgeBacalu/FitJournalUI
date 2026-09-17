@@ -25,17 +25,14 @@ describe('AuthService login integration', () => {
         clear: vi.fn(() => store.clear()),
         getItem: vi.fn((key: string) => store.get(key) ?? null),
         removeItem: vi.fn((key: string) => store.delete(key)),
-        setItem: vi.fn((key: string, value: string) => store.set(key, value))
-      }
+        setItem: vi.fn((key: string, value: string) => store.set(key, value)),
+      },
     });
   };
 
   const jwtWithClaims = (claims: Record<string, unknown>) => {
     const encode = (value: unknown) =>
-      btoa(JSON.stringify(value))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/g, '');
+      btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 
     return `${encode({ alg: 'none', typ: 'JWT' })}.${encode(claims)}.signature`;
   };
@@ -51,8 +48,8 @@ describe('AuthService login integration', () => {
         UserService,
         provideRouter([]),
         provideHttpClient(),
-        provideHttpClientTesting()
-      ]
+        provideHttpClientTesting(),
+      ],
     });
 
     authService = TestBed.inject(AuthService);
@@ -70,7 +67,7 @@ describe('AuthService login integration', () => {
     const accessToken = jwtWithClaims({
       userId,
       role: 'User',
-      exp: Math.floor(Date.now() / 1000) + 3600
+      exp: Math.floor(Date.now() / 1000) + 3600,
     });
     const refreshToken = 'refresh-token';
     const currentUser: User = {
@@ -82,14 +79,15 @@ describe('AuthService login integration', () => {
       age: 26,
       height: 180,
       weight: 80,
-      gender: 1
+      gender: 1,
+      role: 0,
     };
 
     let completed = false;
     authService
       .login({
         email: 'user@fitjournal.test',
-        password: 'Password1'
+        password: 'Password1',
       })
       .subscribe(() => {
         completed = true;
@@ -99,7 +97,7 @@ describe('AuthService login integration', () => {
     expect(loginRequest.request.method).toBe('POST');
     expect(loginRequest.request.body).toEqual({
       email: 'user@fitjournal.test',
-      password: 'Password1'
+      password: 'Password1',
     });
     loginRequest.flush({ accessToken, refreshToken });
 
