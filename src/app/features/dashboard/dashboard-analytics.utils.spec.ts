@@ -1,4 +1,4 @@
-import { countByDay, withinDays } from './dashboard-analytics.utils';
+import { countByDay, countGoalStatuses, withinDays } from './dashboard-analytics.utils';
 import { describe, expect, it } from 'vitest';
 
 describe('dashboard analytics', () => {
@@ -12,5 +12,14 @@ describe('dashboard analytics', () => {
   it('groups activity counts chronologically by day', () => {
     const result = countByDay([{ date: '2026-08-29T10:00:00Z' }, { date: '2026-08-28T10:00:00Z' }, { date: '2026-08-29T18:00:00Z' }], (x) => x.date);
     expect(result).toEqual({ labels: ['2026-08-28', '2026-08-29'], values: [1, 2] });
+  });
+
+  it('summarizes active and achieved goals', () => {
+    const result = countGoalStatuses(
+      [{ isAchieved: false }, { isAchieved: true }, { isAchieved: false }],
+      (goal) => goal.isAchieved
+    );
+
+    expect(result).toEqual({ active: 2, achieved: 1 });
   });
 });

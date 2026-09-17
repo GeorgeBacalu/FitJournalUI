@@ -265,13 +265,12 @@ export interface ShortProgressLog {
   date: string;
   weight: number;
   bodyFat: number;
-}
-
-export interface ProgressLog extends ShortProgressLog {
   waistCm: number;
   chestCm: number;
   armsCm: number;
 }
+
+export interface ProgressLog extends ShortProgressLog {}
 
 export interface ProgressLogsResponse {
   progressLogs: ShortProgressLog[];

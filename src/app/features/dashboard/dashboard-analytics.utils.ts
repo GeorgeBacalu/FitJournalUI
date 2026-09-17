@@ -13,3 +13,8 @@ export function countByDay<T>(items: T[], dateOf: (item: T) => string) {
   const labels = [...counts.keys()].sort();
   return { labels, values: labels.map((label) => counts.get(label) ?? 0) };
 }
+
+export function countGoalStatuses<T>(items: T[], isAchieved: (item: T) => boolean) {
+  const achieved = items.filter(isAchieved).length;
+  return { active: items.length - achieved, achieved };
+}
