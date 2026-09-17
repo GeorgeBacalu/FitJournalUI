@@ -25,4 +25,4 @@ repo:GeorgeBacalu/fit-journal-frontend:environment:azure-dev
 
 No Azure client secret is required. Protect `dev` and configure environment reviewers if deployment approval is desired. The workflow generates the production API endpoint inside its isolated runner; no provider credential or Azure secret is compiled into the SPA.
 
-Until provisioning has completed, leave `AZURE_DEPLOY_ENABLED` unset or `false`. Quality and packaging still run, but the deployment job is skipped instead of failing against missing infrastructure.
+Until provisioning has completed, leave `AZURE_DEPLOY_ENABLED` unset or `false`. Quality still runs on every push and pull request. Packaging waits for `API_URL`, and deployment waits for both the API URL and the explicit enable flag, so an unprovisioned repository remains green instead of producing a misconfigured SPA artifact.
